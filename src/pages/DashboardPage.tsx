@@ -13,7 +13,6 @@ import {
   RefreshCw,
   ChevronDown,
   ChevronUp,
-  AlertTriangle,
   FastForward,
   Square,
 } from "lucide-react";

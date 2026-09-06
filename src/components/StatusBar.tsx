@@ -1,5 +1,4 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
 import {
   RefreshCw,
   Layers,
@@ -17,14 +16,12 @@ interface StatusBarProps {
 }
 
 export const StatusBar: React.FC<StatusBarProps> = ({
-  workspace,
   status,
   isLoading,
   onRefresh,
   onToggleSidebar,
   isSidebarCollapsed,
 }) => {
-  const navigate = useNavigate();
   const currentPort = window.location.port || "8200";
 
   const completedCount = status

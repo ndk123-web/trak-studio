@@ -15,8 +15,6 @@ interface TopBarProps {
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
-  status,
-  workspace,
   onRefresh,
   isLoading,
 }) => {

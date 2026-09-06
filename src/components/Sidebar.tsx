@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useEffect, useRef } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
@@ -8,7 +8,6 @@ import {
   FileCode2,
   Settings,
   BookOpen,
-  Briefcase,
   PanelLeft,
   PanelLeftClose,
 } from "lucide-react";
@@ -27,9 +26,6 @@ interface SidebarProps {
 
 export const Sidebar: React.FC<SidebarProps> = ({
   status,
-  workspace,
-  onRefresh,
-  isLoading,
   width,
   onWidthChange,
   isCollapsed,
@@ -81,7 +77,6 @@ export const Sidebar: React.FC<SidebarProps> = ({
   ];
 
   const toolItems = [
-    { to: "/workspaces", label: "Workspaces", icon: Briefcase },
     { to: "/manifest", label: "Manifest", icon: FileCode2 },
     { to: "/docs", label: "Docs", icon: BookOpen },
     { to: "/settings", label: "Settings", icon: Settings },
@@ -165,7 +160,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             alt="Trak"
             className="w-5 h-5 object-contain"
           />
-          <span className="font-bold text-sm text-white">Trak Studio</span>
+          <span className="font-bold text-sm text-white font-mono">Trak Studio</span>
         </button>
 
         <button

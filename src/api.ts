@@ -333,3 +333,17 @@ export async function deleteWorkspaceHistoryItem(targetPath: string): Promise<Wo
   return updated;
 }
 
+export async function browseWorkspaceFolder(): Promise<{ success: boolean; path?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/browse`, { signal: AbortSignal.timeout(60000) });
+    if (res.ok) {
+      const data = await res.json();
+      return data;
+    }
+  } catch (err) {
+    console.warn("Native browse failed:", err);
+  }
+  return { success: false };
+}
+
+

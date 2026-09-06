@@ -3,7 +3,6 @@ import {
   Settings,
   FolderSync,
   HardDrive,
-  Info,
   Sliders,
   Check,
   RefreshCw,
@@ -15,11 +14,12 @@ import {
   AlertCircle,
   Sun,
   Moon,
+  Cpu,
+  Save,
 } from "lucide-react";
 import type { StatusModel, WorkspaceInfo } from "../types";
 import { useTheme } from "../context/ThemeContext";
-
-import { fetchWorkspacesHistory, deleteWorkspaceHistoryItem } from "../api";
+import { fetchWorkspacesHistory, deleteWorkspaceHistoryItem, browseWorkspaceFolder } from "../api";
 import type { WorkspaceHistoryItem } from "../components/WorkspacesHub";
 
 interface SettingsPageProps {
@@ -40,6 +40,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const { theme, setTheme } = useTheme();
   const [customPath, setCustomPath] = useState(workspace?.cwd || "");
   const [isSwitching, setIsSwitching] = useState(false);
+  const [isBrowsing, setIsBrowsing] = useState(false);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
   const [recentItems, setRecentItems] = useState<WorkspaceHistoryItem[]>([]);
 
@@ -71,16 +72,24 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const handleToggleAutoSave = (val: boolean) => {
     setAutoSave(val);
     localStorage.setItem("trak_autosave", String(val));
+    showSavedToast("Auto-save setting updated");
   };
 
   const handleToggleMinimap = (val: boolean) => {
     setMinimap(val);
     localStorage.setItem("trak_editor_minimap", String(val));
+    showSavedToast("Minimap setting updated");
   };
 
   const handleToggleAutoVerify = (val: boolean) => {
     setAutoVerify(val);
     localStorage.setItem("trak_auto_verify", String(val));
+    showSavedToast("Auto-verify setting updated");
+  };
+
+  const showSavedToast = (msg: string) => {
+    setSavedNotice(msg);
+    setTimeout(() => setSavedNotice(null), 3000);
   };
 
   useEffect(() => {
@@ -94,21 +103,19 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     const pathTrimmed = targetPath.trim();
     setIsSwitching(true);
     setErrorNotice(null);
-    setSavedNotice(null);
 
     try {
       if (onWorkspacePathChange) {
         const res = await onWorkspacePathChange(pathTrimmed);
         if (res && typeof res === "object" && "success" in res && !res.success) {
-          setErrorNotice(res.error || `Failed to switch workspace to: ${pathTrimmed}`);
+          setErrorNotice(res.error || `Failed to switch to: ${pathTrimmed}`);
           setTimeout(() => setErrorNotice(null), 5000);
           return;
         }
       }
 
       await loadHistory();
-      setSavedNotice(`Switched active workspace to: ${pathTrimmed}`);
-      setTimeout(() => setSavedNotice(null), 3500);
+      showSavedToast(`Switched active workspace to: ${pathTrimmed}`);
     } catch (err) {
       setErrorNotice(String(err));
       setTimeout(() => setErrorNotice(null), 5000);
@@ -127,7 +134,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     }
   };
 
-  const handleSavePreferences = (e: React.FormEvent) => {
+  const handleSaveAll = (e: React.FormEvent) => {
     e.preventDefault();
     localStorage.setItem("trak_editor_minimap", String(minimap));
     localStorage.setItem("trak_autosave", String(autoSave));
@@ -135,54 +142,82 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     if (customPath !== workspace?.cwd) {
       handleSwitchWorkspace(customPath);
     } else {
-      setSavedNotice("All Studio settings & preferences saved successfully.");
-      setTimeout(() => setSavedNotice(null), 3000);
+      showSavedToast("All settings saved successfully");
+    }
+  };
+
+  const handleBrowseFolderClick = async () => {
+    setIsBrowsing(true);
+    setErrorNotice(null);
+    try {
+      const res = await browseWorkspaceFolder();
+      if (res && res.success && res.path) {
+        setCustomPath(res.path);
+      }
+    } catch (err) {
+      console.warn("Browse error:", err);
+    } finally {
+      setIsBrowsing(false);
     }
   };
 
   return (
-    <div className="p-6 sm:p-8 max-w-5xl mx-auto space-y-8 select-none">
+    <div className="p-6 sm:p-8 max-w-4xl mx-auto space-y-6 select-none font-sans animate-in fade-in duration-150">
+
       {/* Page Header */}
-      <div className="pb-6 border-b border-white/[0.08] flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.08]">
         <div>
-          <div className="text-xs font-mono text-emerald-400 font-semibold uppercase tracking-wider mb-1 flex items-center gap-1.5">
-            <Settings className="w-4 h-4" />
-            Studio Configuration & Workspace Settings
-          </div>
-          <h1 className="font-serif text-2xl sm:text-3xl text-[#f5f4ef]">
-            Workspace & Studio Settings
+          <h1 className="text-xl sm:text-2xl font-bold font-mono text-white flex items-center gap-2">
+            <Settings className="w-5 h-5 text-emerald-400" />
+            <span>Settings</span>
           </h1>
-          <p className="text-xs text-slate-400 font-sans mt-1">
-            Manage active workspace directory path, studio version, port configuration, and future extensions.
+          <p className="text-xs font-mono text-slate-400 mt-1">
+            Studio preferences, workspace directory, and runtime diagnostics.
           </p>
         </div>
 
-        {savedNotice && (
-          <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono animate-in fade-in">
-            <Check className="w-4 h-4 shrink-0" />
-            <span>{savedNotice}</span>
-          </div>
-        )}
-
-        {errorNotice && (
-          <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono animate-in fade-in">
-            <AlertCircle className="w-4 h-4 shrink-0" />
-            <span>{errorNotice}</span>
-          </div>
-        )}
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={onRefresh}
+            disabled={isLoading}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 border border-white/[0.08] text-xs font-mono transition-colors disabled:opacity-50 cursor-pointer"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
+            <span>Resync</span>
+          </button>
+        </div>
       </div>
 
-      <form onSubmit={handleSavePreferences} className="space-y-6">
-        {/* Section 1: Switch Workspace Directory with Path Input & Recent Workspaces */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4">
-          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
-            <FolderSync className="w-4 h-4 text-emerald-400" />
-            <span>Active Local Workspace Path</span>
-          </div>
+      {/* Notifications */}
+      {savedNotice && (
+        <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 text-xs font-mono animate-in fade-in">
+          <Check className="w-4 h-4 shrink-0" />
+          <span>{savedNotice}</span>
+        </div>
+      )}
 
-          <p className="text-xs text-slate-400 font-sans leading-relaxed">
-            Change the working directory inspected by Trak Studio. When switched, the studio re-indexes <code className="text-slate-200 font-mono">trak.json</code> and all files inside that workspace directory.
-          </p>
+      {errorNotice && (
+        <div className="flex items-center gap-2 px-3.5 py-2.5 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono animate-in fade-in">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{errorNotice}</span>
+        </div>
+      )}
+
+      <form onSubmit={handleSaveAll} className="space-y-6">
+        {/* Section 1: Active Workspace Path & History */}
+        <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 space-y-4 shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
+              <FolderSync className="w-4 h-4 text-emerald-400" />
+              <span>Active Workspace</span>
+            </div>
+            {workspace?.cwd && (
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                CONNECTED
+              </span>
+            )}
+          </div>
 
           <div className="flex flex-col sm:flex-row items-center gap-2">
             <div className="relative flex-1 w-full">
@@ -192,24 +227,34 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 value={customPath}
                 disabled={isSwitching || isLoading}
                 onChange={(e) => setCustomPath(e.target.value)}
-                placeholder="e.g. C:\Users\Navnath\OneDrive\Desktop\Fun\trak-test"
-                className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#07090e] border border-white/[0.08] text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500/50 disabled:opacity-60"
+                placeholder="e.g. D:/projects/learn-go"
+                className="w-full pl-9 pr-3 py-2 rounded-lg bg-[#07090e] border border-white/[0.08] text-xs font-mono text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 disabled:opacity-60"
               />
             </div>
             <button
               type="button"
-              disabled={isSwitching || isLoading}
+              onClick={handleBrowseFolderClick}
+              disabled={isSwitching || isLoading || isBrowsing}
+              className="px-3 py-2 rounded bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 border border-white/[0.08] text-xs font-mono transition-colors flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
+              title="Browse folder from OS"
+            >
+              <FolderOpen className="w-3.5 h-3.5 text-slate-400" />
+              <span>{isBrowsing ? "Browsing..." : "Browse"}</span>
+            </button>
+            <button
+              type="button"
+              disabled={isSwitching || isLoading || !customPath.trim()}
               onClick={() => handleSwitchWorkspace(customPath)}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-zinc-950 font-bold text-xs font-mono transition-colors shrink-0 flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer"
+              className="w-full sm:w-auto px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-zinc-950 font-bold text-xs font-mono transition-colors shrink-0 flex items-center justify-center gap-1.5 cursor-pointer shadow-[0_0_12px_rgba(16,185,129,0.15)]"
             >
               {isSwitching || isLoading ? (
                 <>
                   <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                  <span>Switching Workspace...</span>
+                  <span>Switching...</span>
                 </>
               ) : (
                 <>
-                  <span>Switch Workspace</span>
+                  <span>Switch</span>
                   <ArrowRight className="w-3.5 h-3.5" />
                 </>
               )}
@@ -218,12 +263,15 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
           {/* Recent Workspaces List */}
           {recentItems.length > 0 && (
-            <div className="pt-2 space-y-2">
-              <div className="text-[11px] font-mono text-slate-500 uppercase flex items-center gap-1.5">
-                <Clock className="w-3 h-3" />
-                <span>Recent Workspaces</span>
+            <div className="pt-2 space-y-2 border-t border-white/[0.04]">
+              <div className="text-[11px] font-mono text-slate-500 uppercase flex items-center justify-between">
+                <span className="flex items-center gap-1.5">
+                  <Clock className="w-3 h-3" />
+                  <span>Recent Workspaces</span>
+                </span>
+                <span>{recentItems.length}</span>
               </div>
-              <div className="space-y-1.5">
+              <div className="space-y-1">
                 {recentItems.map((item) => {
                   const isActive = item.path.toLowerCase() === workspace?.cwd?.toLowerCase();
                   return (
@@ -231,31 +279,32 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                       key={item.path}
                       onClick={() => {
                         setCustomPath(item.path);
-                        handleSwitchWorkspace(item.path);
+                        if (!isActive) handleSwitchWorkspace(item.path);
                       }}
-                      className={`flex items-center justify-between p-2.5 rounded-lg text-xs font-mono cursor-pointer border transition-all ${
+                      className={`group flex items-center justify-between p-2.5 rounded-lg text-xs font-mono cursor-pointer border transition-all ${
                         isActive
                           ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                          : "bg-[#07090e] border-white/[0.04] text-slate-400 hover:text-slate-200 hover:border-white/[0.08]"
+                          : "bg-[#07090e] border-white/[0.04] text-slate-300 hover:text-slate-200 hover:border-white/[0.08]"
                       }`}
                     >
                       <div className="flex items-center gap-2 truncate">
-                        <FolderOpen className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                        <FolderOpen className={`w-3.5 h-3.5 shrink-0 ${isActive ? "text-emerald-400" : "text-slate-500"}`} />
                         <span className="truncate font-semibold text-slate-200">{item.name}</span>
                         <span className="text-[11px] text-slate-500 truncate hidden sm:inline">({item.path})</span>
-                        {isActive && (
-                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-semibold shrink-0">
-                            Active
-                          </span>
-                        )}
                       </div>
 
                       <div className="flex items-center gap-2 shrink-0 ml-2">
-                        <span className="text-[10px] text-slate-500 hidden md:inline">{item.lastOpened}</span>
+                        {isActive ? (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold shrink-0">
+                            Active
+                          </span>
+                        ) : (
+                          <span className="text-[10px] text-slate-500 hidden md:inline">{item.lastOpened}</span>
+                        )}
                         <button
                           type="button"
                           onClick={(e) => handleRemoveRecent(item.path, e)}
-                          className="p-1 rounded hover:bg-white/[0.08] text-slate-500 hover:text-red-400 transition-colors shrink-0"
+                          className="p-1 rounded hover:bg-white/[0.08] text-slate-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
                           title="Remove from history"
                         >
                           <Trash2 className="w-3.5 h-3.5" />
@@ -269,66 +318,29 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           )}
         </div>
 
-        {/* Section 2: Studio & Bridge Runtime Metadata (Version, Port, Architecture) */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4">
-          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
-            <Info className="w-4 h-4 text-emerald-400" />
-            <span>Studio & Runtime Information</span>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3">
-            <div className="p-3.5 rounded-xl border border-white/[0.06] bg-[#07090e] space-y-1">
-              <div className="text-[10px] font-mono text-slate-500 uppercase">Studio Version</div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-sm font-mono font-bold text-[#f5f4ef]">v1.0.0</span>
-                <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-                  LATEST
-                </span>
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-white/[0.06] bg-[#07090e] space-y-1">
-              <div className="text-[10px] font-mono text-slate-500 uppercase">Local Bridge Port</div>
-              <div className="text-sm font-mono font-bold text-emerald-400">:{port}</div>
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-white/[0.06] bg-[#07090e] space-y-1">
-              <div className="text-[10px] font-mono text-slate-500 uppercase">CLI Manifest Version</div>
-              <div className="text-sm font-mono font-bold text-slate-300">
-                {status?.version ? `v${status.version}` : "v2.0.0"}
-              </div>
-            </div>
-
-            <div className="p-3.5 rounded-xl border border-white/[0.06] bg-[#07090e] space-y-1">
-              <div className="text-[10px] font-mono text-slate-500 uppercase">Editor Engine</div>
-              <div className="text-sm font-mono font-bold text-slate-300">Monaco VS Code</div>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 3: Monaco Studio & Appearance Preferences */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4">
+        {/* Section 2: Studio Appearance & Preferences */}
+        <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 space-y-4 shadow-sm">
           <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
             <Sliders className="w-4 h-4 text-emerald-400" />
-            <span>Studio Appearance & Editor Preferences</span>
+            <span>Appearance & Editor</span>
           </div>
 
           <div className="space-y-3">
-            {/* Theme Appearance Mode (Dark / Light) */}
-            <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.04] bg-[#07090e]">
+            {/* Theme Mode Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-lg border border-white/[0.04] bg-[#07090e]">
               <div>
-                <div className="text-xs font-mono text-slate-200">Studio Theme Mode</div>
-                <div className="text-[11px] font-sans text-slate-400 mt-0.5">
-                  Choose between high-contrast dark mode or clean developer light mode.
+                <div className="text-xs font-mono text-slate-200 font-medium">Theme Mode</div>
+                <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                  High-contrast dark or clean developer light mode.
                 </div>
               </div>
-              <div className="flex items-center p-1 rounded-lg bg-black/20 border border-white/[0.06] gap-1">
+              <div className="flex items-center p-0.5 rounded-lg bg-black/30 border border-white/[0.06] gap-1">
                 <button
                   type="button"
                   onClick={() => setTheme("dark")}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono transition-all cursor-pointer ${
                     theme === "dark"
-                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm font-semibold"
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
@@ -338,9 +350,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
                 <button
                   type="button"
                   onClick={() => setTheme("light")}
-                  className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono transition-all ${
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono transition-all cursor-pointer ${
                     theme === "light"
-                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm font-semibold"
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-semibold"
                       : "text-slate-400 hover:text-slate-200"
                   }`}
                 >
@@ -350,73 +362,75 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
             </div>
 
-            {/* Auto-Save Toggle (Default ON) */}
-            <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.04] bg-[#07090e]">
+            {/* Auto-Save Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-lg border border-white/[0.04] bg-[#07090e]">
               <div>
                 <div className="flex items-center gap-2">
-                  <span className="text-xs font-mono text-slate-200">Auto-Save Buffer & Files</span>
-                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
-                    Default ON
+                  <span className="text-xs font-mono text-slate-200 font-medium">Auto-Save Buffer</span>
+                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                    ON
                   </span>
                 </div>
-                <div className="text-[11px] font-sans text-slate-400 mt-0.5">
-                  Automatically persists file edits directly to disk 800ms after you stop typing.
+                <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                  Persists code changes directly to disk 800ms after typing.
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => handleToggleAutoSave(!autoSave)}
-                className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${
+                className={`w-9 h-5 rounded-full transition-colors relative shrink-0 cursor-pointer ${
                   autoSave ? "bg-emerald-500" : "bg-white/[0.1]"
                 }`}
               >
                 <div
-                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                    autoSave ? "translate-x-5" : "translate-x-1"
+                  className={`w-3.5 h-3.5 rounded-full bg-white transition-transform ${
+                    autoSave ? "translate-x-4.5" : "translate-x-1"
                   }`}
                 />
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.04] bg-[#07090e]">
+            {/* Minimap Toggle */}
+            <div className="flex items-center justify-between p-3 rounded-lg border border-white/[0.04] bg-[#07090e]">
               <div>
-                <div className="text-xs font-mono text-slate-200">Editor Minimap</div>
-                <div className="text-[11px] font-sans text-slate-500">
-                  Display high-level code navigation minimap on the right gutter of Monaco Editor.
+                <div className="text-xs font-mono text-slate-200 font-medium">Editor Minimap</div>
+                <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                  Display high-level code navigation minimap in Monaco editor.
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => handleToggleMinimap(!minimap)}
-                className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${
+                className={`w-9 h-5 rounded-full transition-colors relative shrink-0 cursor-pointer ${
                   minimap ? "bg-emerald-500" : "bg-white/[0.1]"
                 }`}
               >
                 <div
-                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                    minimap ? "translate-x-5" : "translate-x-1"
+                  className={`w-3.5 h-3.5 rounded-full bg-white transition-transform ${
+                    minimap ? "translate-x-4.5" : "translate-x-1"
                   }`}
                 />
               </button>
             </div>
 
-            <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.04] bg-[#07090e]">
+            {/* Auto-Verify on Passing Tests */}
+            <div className="flex items-center justify-between p-3 rounded-lg border border-white/[0.04] bg-[#07090e]">
               <div>
-                <div className="text-xs font-mono text-slate-200">Auto-Complete on Passing Tests</div>
-                <div className="text-[11px] font-sans text-slate-500">
-                  Automatically mark module as completed in <code className="text-slate-300 font-mono">trak.json</code> when assertion runner passes.
+                <div className="text-xs font-mono text-slate-200 font-medium">Auto-Complete on Pass</div>
+                <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                  Automatically mark module complete when test suite passes.
                 </div>
               </div>
               <button
                 type="button"
                 onClick={() => handleToggleAutoVerify(!autoVerify)}
-                className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${
+                className={`w-9 h-5 rounded-full transition-colors relative shrink-0 cursor-pointer ${
                   autoVerify ? "bg-emerald-500" : "bg-white/[0.1]"
                 }`}
               >
                 <div
-                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                    autoVerify ? "translate-x-5" : "translate-x-1"
+                  className={`w-3.5 h-3.5 rounded-full bg-white transition-transform ${
+                    autoVerify ? "translate-x-4.5" : "translate-x-1"
                   }`}
                 />
               </button>
@@ -424,62 +438,75 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         </div>
 
-        {/* Section 4: Upstream Registry */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4">
+        {/* Section 3: Runtime Diagnostics */}
+        <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 space-y-4 shadow-sm">
           <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
-            <Globe className="w-4 h-4 text-emerald-400" />
-            <span>Curriculum Registry Upstream</span>
+            <Cpu className="w-4 h-4 text-emerald-400" />
+            <span>Runtime Information</span>
           </div>
 
-          <div className="p-3 rounded-xl border border-white/[0.04] bg-[#07090e] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
+            <div className="p-3 rounded-lg border border-white/[0.04] bg-[#07090e] space-y-1">
+              <div className="text-[10px] font-mono text-slate-500 uppercase">Studio Version</div>
+              <div className="text-xs font-mono font-bold text-white flex items-center gap-1.5">
+                <span>v1.0.0</span>
+                <span className="text-[9px] px-1 rounded bg-emerald-500/10 text-emerald-400 font-bold border border-emerald-500/20">
+                  LATEST
+                </span>
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg border border-white/[0.04] bg-[#07090e] space-y-1">
+              <div className="text-[10px] font-mono text-slate-500 uppercase">Bridge Port</div>
+              <div className="text-xs font-mono font-bold text-emerald-400">:{port}</div>
+            </div>
+
+            <div className="p-3 rounded-lg border border-white/[0.04] bg-[#07090e] space-y-1">
+              <div className="text-[10px] font-mono text-slate-500 uppercase">CLI Manifest</div>
+              <div className="text-xs font-mono font-bold text-slate-300">
+                {status?.version ? `v${status.version}` : "v2.0.0"}
+              </div>
+            </div>
+
+            <div className="p-3 rounded-lg border border-white/[0.04] bg-[#07090e] space-y-1">
+              <div className="text-[10px] font-mono text-slate-500 uppercase">Editor Engine</div>
+              <div className="text-xs font-mono font-bold text-slate-300">Monaco Core</div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 4: Upstream Registry */}
+        <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 space-y-3 shadow-sm">
+          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
+            <Globe className="w-4 h-4 text-emerald-400" />
+            <span>Curriculum Upstream</span>
+          </div>
+
+          <div className="p-3 rounded-lg border border-white/[0.04] bg-[#07090e] flex flex-col sm:flex-row sm:items-center justify-between gap-2 text-xs font-mono">
             <span className="text-slate-400">Official Curriculum Registry</span>
             <a
               href="https://github.com/ndk123-web/trak-registry"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-emerald-400 hover:underline flex items-center gap-1"
+              className="text-emerald-400 hover:underline flex items-center gap-1 font-semibold"
             >
               <span>github.com/ndk123-web/trak-registry</span>
+              <ArrowRight className="w-3 h-3" />
             </a>
           </div>
         </div>
 
-        {/* Save Bar */}
-        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
+        {/* Footer Save Action */}
+        <div className="flex items-center justify-end gap-3 pt-2">
           <button
-            type="button"
-            onClick={onRefresh}
-            disabled={isLoading}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 border border-white/[0.08] text-xs font-mono transition-colors disabled:opacity-50"
+            type="submit"
+            className="px-5 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs font-mono transition-colors shadow-[0_0_12px_rgba(16,185,129,0.2)] flex items-center gap-1.5 cursor-pointer"
           >
-            <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
-            <span>Resync Local Workspace</span>
+            <Save className="w-3.5 h-3.5" />
+            <span>Save Preferences</span>
           </button>
-
-          <div className="flex items-center gap-3">
-            {savedNotice && (
-              <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 animate-in fade-in">
-                <Check className="w-3.5 h-3.5" />
-                <span>Saved successfully</span>
-              </div>
-            )}
-            <button
-              type="submit"
-              className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs font-mono transition-colors shadow-[0_0_15px_rgba(16,185,129,0.2)] cursor-pointer"
-            >
-              Save Preferences
-            </button>
-          </div>
         </div>
       </form>
-
-      {/* Floating Bottom Toast Notification */}
-      {savedNotice && (
-        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#0e131f] border border-emerald-500/40 text-emerald-300 text-xs font-mono shadow-2xl animate-in slide-in-from-bottom-2">
-          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
-          <span>{savedNotice}</span>
-        </div>
-      )}
     </div>
   );
 };

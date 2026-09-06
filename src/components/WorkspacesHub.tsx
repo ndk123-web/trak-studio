@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Check,
   RefreshCw,
   AlertCircle,
   FolderOpen,
   ArrowRight,
   Trash2,
+  HardDrive,
 } from "lucide-react";
 import type { StatusModel, WorkspaceInfo } from "../types";
-
-import { fetchWorkspacesHistory, deleteWorkspaceHistoryItem } from "../api";
+import { fetchWorkspacesHistory, deleteWorkspaceHistoryItem, browseWorkspaceFolder } from "../api";
 
 export interface WorkspaceHistoryItem {
   path: string;
@@ -33,8 +32,10 @@ export const WorkspacesHub: React.FC<WorkspacesHubProps> = ({
   isLoading = false,
 }) => {
   const navigate = useNavigate();
+
   const [inputPath, setInputPath] = useState(workspace?.cwd || "");
   const [switchingPath, setSwitchingPath] = useState<string | null>(null);
+  const [isBrowsing, setIsBrowsing] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [history, setHistory] = useState<WorkspaceHistoryItem[]>([]);
 
@@ -67,7 +68,7 @@ export const WorkspacesHub: React.FC<WorkspacesHubProps> = ({
       if (onWorkspacePathChange) {
         const res = await onWorkspacePathChange(pathTrimmed);
         if (res && typeof res === "object" && "success" in res && !res.success) {
-          setErrorMsg(res.error || `Failed to open: ${pathTrimmed}`);
+          setErrorMsg(res.error || `Failed to open workspace: ${pathTrimmed}`);
           setTimeout(() => setErrorMsg(null), 5000);
           return;
         }
@@ -79,6 +80,21 @@ export const WorkspacesHub: React.FC<WorkspacesHubProps> = ({
       setTimeout(() => setErrorMsg(null), 5000);
     } finally {
       setSwitchingPath(null);
+    }
+  };
+
+  const handleBrowseFolderClick = async () => {
+    setIsBrowsing(true);
+    setErrorMsg(null);
+    try {
+      const res = await browseWorkspaceFolder();
+      if (res && res.success && res.path) {
+        setInputPath(res.path);
+      }
+    } catch (err) {
+      console.warn("Browse error:", err);
+    } finally {
+      setIsBrowsing(false);
     }
   };
 
@@ -95,81 +111,116 @@ export const WorkspacesHub: React.FC<WorkspacesHubProps> = ({
   const hasModules = status && Object.keys(status.module_breakdown || {}).length > 0;
 
   return (
-    <div className="flex items-center justify-center min-h-[calc(100vh-6rem)]">
-      <div className="w-full max-w-2xl mx-auto px-6 py-10 space-y-6">
-        {/* Heading */}
-        <div className="space-y-1">
-          <h1 className="text-lg font-bold text-white font-mono">Workspaces</h1>
-          <p className="text-xs text-slate-400">
-            Enter a path to a trak workspace directory, or select from history.
-          </p>
+    <div className="min-h-screen w-full bg-[#07090e] bg-[linear-gradient(to_right,#ffffff08_1px,transparent_1px),linear-gradient(to_bottom,#ffffff08_1px,transparent_1px)] bg-[size:32px_32px] flex flex-col items-center justify-center p-6 select-none font-mono">
+      <div className="w-full max-w-xl space-y-5">
+        {/* Simple Brand Header */}
+        <div className="flex items-center gap-3 pb-4 border-b border-white/[0.08]">
+          <img
+            src="/trak.png"
+            alt="Trak"
+            className="w-7 h-7 object-contain"
+          />
+          <div>
+            <h1 className="text-base font-bold text-white tracking-tight">
+              Trak Studio
+            </h1>
+            <p className="text-xs text-slate-400">
+              Select a workspace to open, or enter a local path.
+            </p>
+          </div>
         </div>
 
-        {/* Path Input */}
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleSwitch(inputPath);
-          }}
-          className="flex items-center gap-2"
-        >
-          <input
-            type="text"
-            value={inputPath}
-            disabled={!!switchingPath || isLoading}
-            onChange={(e) => setInputPath(e.target.value)}
-            placeholder="e.g. D:/projects/learn-go"
-            className="flex-1 px-3 py-2.5 rounded-lg bg-[#090b10] border border-white/[0.08] text-xs font-mono text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 disabled:opacity-60"
-          />
-          <button
-            type="submit"
-            disabled={!inputPath.trim() || !!switchingPath || isLoading}
-            className="px-4 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-zinc-950 font-bold text-xs font-mono transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
-          >
-            {switchingPath ? (
-              <>
-                <RefreshCw className="w-3.5 h-3.5 animate-spin" />
-                <span>Opening...</span>
-              </>
-            ) : (
-              <>
-                <span>Open</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </>
-            )}
-          </button>
-        </form>
+        {/* Path Input Box */}
+        <div className="p-4 rounded-lg border border-white/[0.08] bg-[#090b10] space-y-3 shadow-sm">
+          <div className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
+            <HardDrive className="w-3.5 h-3.5 text-emerald-400" />
+            <span>Workspace Path</span>
+          </div>
 
-        {/* Error */}
-        {errorMsg && (
-          <div className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono">
-            <AlertCircle className="w-3.5 h-3.5 shrink-0" />
-            <span>{errorMsg}</span>
+          <form
+            onSubmit={(e) => {
+              e.preventDefault();
+              handleSwitch(inputPath);
+            }}
+            className="flex items-center gap-2"
+          >
+            <input
+              type="text"
+              value={inputPath}
+              disabled={!!switchingPath || isLoading || isBrowsing}
+              onChange={(e) => setInputPath(e.target.value)}
+              placeholder="e.g. D:/projects/learn-go"
+              className="flex-1 px-3 py-2 rounded bg-[#07090e] border border-white/[0.08] text-xs text-slate-200 placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/60 disabled:opacity-60"
+              autoFocus
+            />
+            <button
+              type="button"
+              onClick={handleBrowseFolderClick}
+              disabled={!!switchingPath || isLoading || isBrowsing}
+              className="px-3 py-2 rounded bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 border border-white/[0.08] text-xs transition-colors flex items-center gap-1.5 cursor-pointer shrink-0 disabled:opacity-50"
+              title="Browse folder from OS"
+            >
+              <FolderOpen className="w-3.5 h-3.5 text-slate-400" />
+              <span>{isBrowsing ? "Browsing..." : "Browse"}</span>
+            </button>
+            <button
+              type="submit"
+              disabled={!inputPath.trim() || !!switchingPath || isLoading || isBrowsing}
+              className="px-4 py-2 rounded bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-zinc-950 font-bold text-xs transition-colors shrink-0 flex items-center gap-1.5 cursor-pointer"
+            >
+              {switchingPath ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Opening...</span>
+                </>
+              ) : (
+                <>
+                  <span>Open</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
+            </button>
+          </form>
+
+          {/* Error Message */}
+          {errorMsg && (
+            <div className="flex items-center gap-2 p-2 rounded bg-red-500/10 border border-red-500/25 text-red-400 text-xs">
+              <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+        </div>
+
+        {/* Current Active Workspace Shortcut */}
+        {hasModules && workspace?.cwd && (
+          <div className="p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <FolderOpen className="w-4 h-4 text-emerald-400 shrink-0" />
+              <div className="min-w-0">
+                <div className="text-[10px] text-emerald-400 font-bold uppercase tracking-wider">
+                  Active Workspace
+                </div>
+                <div className="text-xs text-slate-200 truncate">
+                  {workspace.cwd}
+                </div>
+              </div>
+            </div>
+            <button
+              onClick={() => navigate("/dashboard")}
+              className="px-3 py-1.5 rounded bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs shrink-0 flex items-center gap-1 cursor-pointer transition-colors"
+            >
+              <span>Go to Dashboard</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </button>
           </div>
         )}
 
-        {/* Current Workspace Quick Link */}
-        {hasModules && workspace?.cwd && (
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="w-full flex items-center justify-between p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-xs font-mono hover:bg-emerald-500/15 transition-colors cursor-pointer"
-          >
-            <div className="flex items-center gap-2 min-w-0">
-              <FolderOpen className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-              <span className="text-emerald-300 font-medium truncate">{workspace.cwd}</span>
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold shrink-0">
-                Active
-              </span>
-            </div>
-            <ArrowRight className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-          </button>
-        )}
-
-        {/* History */}
+        {/* Recent Workspaces */}
         {history.length > 0 && (
           <div className="space-y-2">
-            <div className="text-[11px] font-mono text-slate-500 uppercase tracking-wider">
-              Recent
+            <div className="text-[11px] text-slate-500 uppercase tracking-wider px-1 flex items-center justify-between">
+              <span>Recent Workspaces</span>
+              <span>{history.length}</span>
             </div>
             <div className="space-y-1">
               {history.map((item) => {
@@ -178,49 +229,44 @@ export const WorkspacesHub: React.FC<WorkspacesHubProps> = ({
                   <div
                     key={item.path}
                     onClick={() => !isCurrent && handleSwitch(item.path)}
-                    className={`group flex items-center justify-between p-3 rounded-lg border text-xs font-mono transition-all ${
+                    className={`group flex items-center justify-between p-2.5 rounded-lg border text-xs transition-colors ${
                       isCurrent
-                        ? "bg-emerald-500/5 border-emerald-500/20 text-emerald-300"
-                        : "bg-[#090b10] hover:bg-white/[0.03] border-white/[0.06] text-slate-300 hover:border-white/[0.12] cursor-pointer"
+                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                        : "bg-[#090b10] hover:bg-white/[0.04] border-white/[0.06] text-slate-300 cursor-pointer"
                     }`}
                   >
                     <div className="flex items-center gap-2.5 min-w-0">
                       <FolderOpen className={`w-3.5 h-3.5 shrink-0 ${isCurrent ? "text-emerald-400" : "text-slate-500"}`} />
                       <div className="min-w-0">
-                        <div className="font-medium text-slate-200 truncate">{item.name}</div>
+                        <div className="font-semibold text-slate-200 truncate">{item.name}</div>
                         <div className="text-[11px] text-slate-500 truncate">{item.path}</div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0 ml-3">
-                      {isCurrent && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-bold">
-                          Current
+                      {isCurrent ? (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-bold">
+                          Active
                         </span>
+                      ) : (
+                        <span className="text-[10px] text-slate-500">{item.lastOpened}</span>
                       )}
                       {!isCurrent && switchingPath === item.path && (
-                        <RefreshCw className="w-3 h-3 animate-spin text-emerald-400" />
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
                       )}
                       <button
                         type="button"
                         onClick={(e) => handleRemoveHistory(item.path, e)}
-                        title="Remove"
-                        className="p-1 rounded hover:bg-white/[0.08] text-slate-600 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
+                        title="Remove from history"
+                        className="p-1 rounded hover:bg-white/[0.08] text-slate-500 hover:text-red-400 transition-colors opacity-0 group-hover:opacity-100"
                       >
-                        <Trash2 className="w-3 h-3" />
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </div>
                   </div>
                 );
               })}
             </div>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {history.length === 0 && !hasModules && (
-          <div className="text-center py-8 text-xs text-slate-500 font-mono">
-            No recent workspaces. Paste a path above to get started.
           </div>
         )}
       </div>
