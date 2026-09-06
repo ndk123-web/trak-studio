@@ -38,3 +38,189 @@
     background: rgba(100, 100, 100, 0.65);
   }
 }
+
+/* Light Mode Overrides */
+html.light {
+  color-scheme: light;
+}
+
+html.light body {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+/* TopBar Header & Sidebar Surfaces */
+html.light header {
+  background-color: rgba(255, 255, 255, 0.94) !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light aside {
+  background-color: #ffffff !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Background utilities */
+html.light .bg-\[\#07090e\] {
+  background-color: #f8fafc !important;
+}
+
+html.light .bg-\[\#07090e\]\/80 {
+  background-color: rgba(255, 255, 255, 0.94) !important;
+}
+
+html.light .bg-\[\#080a10\] {
+  background-color: #f1f5f9 !important;
+}
+
+html.light .bg-\[\#07080d\] {
+  background-color: #f8fafc !important;
+}
+
+html.light .bg-\[\#090b10\] {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+}
+
+html.light .bg-\[\#0c0f17\],
+html.light .bg-\[\#0e131f\] {
+  background-color: #f1f5f9 !important;
+}
+
+/* Border utilities */
+html.light .border-white\/\[0\.08\],
+html.light .border-white\/\[0\.07\],
+html.light .border-white\/\[0\.06\],
+html.light .border-white\/\[0\.05\],
+html.light .border-white\/\[0\.04\],
+html.light .border-white\/\[0\.1\],
+html.light .border-white\/\[0\.15\] {
+  border-color: #e2e8f0 !important;
+}
+
+/* Text Colors: Fix white-on-white text in TopBar, Sidebar, and Content */
+html.light .text-white {
+  color: #0f172a !important;
+}
+
+html.light .hover\:text-white:hover {
+  color: #0f172a !important;
+}
+
+html.light .text-slate-100 {
+  color: #0f172a !important;
+}
+
+html.light .text-slate-200 {
+  color: #1e293b !important;
+}
+
+html.light .text-slate-300 {
+  color: #334155 !important;
+}
+
+html.light .text-slate-400 {
+  color: #475569 !important;
+}
+
+html.light .text-slate-500 {
+  color: #64748b !important;
+}
+
+html.light .text-slate-600 {
+  color: #94a3b8 !important;
+}
+
+html.light .text-\[\#f5f4ef\] {
+  color: #0f172a !important;
+}
+
+/* Interactive elements and pills */
+html.light .bg-white\/\[0\.03\],
+html.light .bg-white\/\[0\.04\],
+html.light .bg-white\/\[0\.05\],
+html.light .bg-white\/\[0\.06\],
+html.light .bg-white\/\[0\.08\] {
+  background-color: #f1f5f9 !important;
+  color: #1e293b !important;
+}
+
+html.light .hover\:bg-white\/\[0\.03\]:hover,
+html.light .hover\:bg-white\/\[0\.04\]:hover,
+html.light .hover\:bg-white\/\[0\.05\]:hover,
+html.light .hover\:bg-white\/\[0\.06\]:hover,
+html.light .hover\:bg-white\/\[0\.08\]:hover {
+  background-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+html.light .bg-black\/20 {
+  background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+}
+
+/* Sidebar navigation links */
+html.light aside nav a {
+  color: #475569 !important;
+}
+
+html.light aside nav a:hover {
+  background-color: #f1f5f9 !important;
+  color: #0f172a !important;
+}
+
+html.light aside nav a.active {
+  background-color: #ecfdf5 !important;
+  color: #047857 !important;
+  border-color: #a7f3d0 !important;
+}
+
+html.light aside nav a.active svg {
+  color: #059669 !important;
+}
+
+html.light aside nav a svg {
+  color: #64748b !important;
+}
+
+/* High contrast emerald accents for light mode */
+html.light .text-emerald-400 {
+  color: #059669 !important;
+}
+
+html.light .text-emerald-300 {
+  color: #047857 !important;
+}
+
+html.light .bg-emerald-500\/10 {
+  background-color: #ecfdf5 !important;
+}
+
+html.light .border-emerald-500\/30,
+html.light .border-emerald-500\/25,
+html.light .border-emerald-500\/20 {
+  border-color: #a7f3d0 !important;
+}
+
+/* TopBar Brand Button & Icons */
+html.light header button {
+  color: #334155;
+}
+
+html.light header button:hover {
+  color: #0f172a;
+}
+
+/* Inputs & Form Controls */
+html.light input,
+html.light select,
+html.light textarea {
+  background-color: #ffffff !important;
+  border-color: #cbd5e1 !important;
+  color: #0f172a !important;
+}
+
+html.light input::placeholder,
+html.light textarea::placeholder {
+  color: #94a3b8 !important;
+}

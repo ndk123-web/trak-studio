@@ -5,8 +5,11 @@ import {
   RefreshCw,
   PlayCircle,
   Settings,
+  Sun,
+  Moon,
 } from "lucide-react";
 import type { StatusModel, WorkspaceInfo } from "../types";
+import { useTheme } from "../context/ThemeContext";
 
 interface TopBarProps {
   status: StatusModel | null;
@@ -23,19 +26,21 @@ export const TopBar: React.FC<TopBarProps> = ({
 }) => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { theme, toggleTheme } = useTheme();
 
   const getBreadcrumb = () => {
     const path = location.pathname;
-    if (path === "/" || path === "/dashboard") return "Dashboard Overview";
+    if (path === "/" || path === "/dashboard") return "Dashboard";
     if (path.startsWith("/modules/")) {
       const id = path.replace("/modules/", "");
       return `Module: ${decodeURIComponent(id)}`;
     }
     if (path === "/modules") return "Curriculum Roadmap";
-    if (path === "/editor") return "Monaco Code Studio";
-    if (path === "/verify") return "Test & Assertion Runner";
-    if (path === "/manifest") return "trak.json Manifest";
-    if (path === "/settings") return "Studio & Workspace Settings";
+    if (path === "/editor") return "Code Editor";
+    if (path === "/verify") return "Assertion Runner";
+    if (path === "/manifest") return "Manifest (trak.json)";
+    if (path === "/docs") return "Documentation";
+    if (path === "/settings") return "Settings";
     return "Workspace";
   };
 
@@ -97,6 +102,18 @@ export const TopBar: React.FC<TopBarProps> = ({
           className="p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] text-slate-300 hover:text-white transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
+        </button>
+
+        <button
+          onClick={toggleTheme}
+          title={theme === "dark" ? "Switch to Light Mode" : "Switch to Dark Mode"}
+          className="p-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] text-slate-300 hover:text-white transition-colors cursor-pointer"
+        >
+          {theme === "dark" ? (
+            <Sun className="w-3.5 h-3.5 text-amber-400" />
+          ) : (
+            <Moon className="w-3.5 h-3.5 text-indigo-500" />
+          )}
         </button>
 
         <button

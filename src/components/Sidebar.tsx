@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { NavLink } from "react-router-dom";
+import { NavLink, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard,
   Layers,
@@ -11,6 +11,7 @@ import {
   RefreshCw,
   Server,
   Settings,
+  BookOpen,
   PanelLeft,
   PanelLeftClose,
 } from "lucide-react";
@@ -37,6 +38,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   isCollapsed,
   onToggleCollapse,
 }) => {
+  const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const isResizing = useRef(false);
 
@@ -94,19 +96,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       to: "/modules",
-      label: "Curriculum Roadmap",
+      label: "Curriculum Modules",
       icon: Layers,
       badge: totalCount > 0 ? `${totalCount}` : null,
     },
     {
       to: "/editor",
-      label: "Monaco Code Studio",
+      label: "Code Editor",
       icon: Code2,
-      badge: "VS Code",
+      badge: "Monaco",
     },
     {
       to: "/verify",
-      label: "Test Runner",
+      label: "Assertion Runner",
       icon: PlayCircle,
       badge: `${completedCount}/${totalCount}`,
     },
@@ -114,13 +116,19 @@ export const Sidebar: React.FC<SidebarProps> = ({
       to: "/manifest",
       label: "trak.json Manifest",
       icon: FileCode2,
-      badge: status?.version || null,
+      badge: status?.version ? `v${status.version}` : null,
+    },
+    {
+      to: "/docs",
+      label: "Documentation",
+      icon: BookOpen,
+      badge: null,
     },
     {
       to: "/settings",
-      label: "Studio Settings",
+      label: "Settings",
       icon: Settings,
-      badge: "Config",
+      badge: null,
     },
   ];
 
@@ -188,8 +196,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
     >
       {/* 1. Header with Official trak.png Logo & Collapse Toggle (Exact trak-web style) */}
       <div className="h-14 px-4 border-b border-white/[0.07] flex items-center justify-between gap-2">
-        <div className="flex items-center gap-3 min-w-0">
-          <div className="w-7 h-7 rounded-lg overflow-hidden border border-white/[0.1] bg-[#0c0f17] flex items-center justify-center p-1 shrink-0">
+        <button
+          onClick={() => navigate("/dashboard")}
+          title="Go to Dashboard"
+          className="flex items-center gap-3 min-w-0 text-left hover:opacity-90 transition-opacity cursor-pointer group"
+        >
+          <div className="w-7 h-7 rounded-lg overflow-hidden border border-white/[0.1] bg-[#0c0f17] flex items-center justify-center p-1 shrink-0 group-hover:border-emerald-500/40 transition-colors">
             <img
               src="/trak.png"
               alt="Trak Logo"
@@ -197,7 +209,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             />
           </div>
           <div className="flex items-center gap-2 min-w-0">
-            <span className="font-extrabold text-base tracking-tight text-white">
+            <span className="font-extrabold text-base tracking-tight text-white group-hover:text-emerald-400 transition-colors">
               Trak Studio
             </span>
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
@@ -209,7 +221,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               </span>
             )}
           </div>
-        </div>
+        </button>
 
         {/* Desktop Collapse Toggle Button (Exact trak-web style) */}
         <button

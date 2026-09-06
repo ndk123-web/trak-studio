@@ -13,8 +13,11 @@ import {
   Clock,
   Trash2,
   AlertCircle,
+  Sun,
+  Moon,
 } from "lucide-react";
 import type { StatusModel, WorkspaceInfo } from "../types";
+import { useTheme } from "../context/ThemeContext";
 
 interface SettingsPageProps {
   workspace: WorkspaceInfo | null;
@@ -31,6 +34,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   isLoading,
   onWorkspacePathChange,
 }) => {
+  const { theme, setTheme } = useTheme();
   const [customPath, setCustomPath] = useState(workspace?.cwd || "");
   const [isSwitching, setIsSwitching] = useState(false);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
@@ -50,8 +54,12 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   });
 
   const port = window.location.port || "8200";
-  const [autoVerify, setAutoVerify] = useState(true);
-  const [minimap, setMinimap] = useState(true);
+  const [autoVerify, setAutoVerify] = useState<boolean>(() => {
+    return localStorage.getItem("trak_auto_verify") !== "false";
+  });
+  const [minimap, setMinimap] = useState<boolean>(() => {
+    return localStorage.getItem("trak_editor_minimap") !== "false";
+  });
   const [autoSave, setAutoSave] = useState<boolean>(() => {
     return localStorage.getItem("trak_autosave") !== "false";
   });
@@ -60,6 +68,16 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const handleToggleAutoSave = (val: boolean) => {
     setAutoSave(val);
     localStorage.setItem("trak_autosave", String(val));
+  };
+
+  const handleToggleMinimap = (val: boolean) => {
+    setMinimap(val);
+    localStorage.setItem("trak_editor_minimap", String(val));
+  };
+
+  const handleToggleAutoVerify = (val: boolean) => {
+    setAutoVerify(val);
+    localStorage.setItem("trak_auto_verify", String(val));
   };
 
   useEffect(() => {
@@ -109,6 +127,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
 
   const handleSavePreferences = (e: React.FormEvent) => {
     e.preventDefault();
+    localStorage.setItem("trak_editor_minimap", String(minimap));
+    localStorage.setItem("trak_autosave", String(autoSave));
+    localStorage.setItem("trak_auto_verify", String(autoVerify));
     if (customPath !== workspace?.cwd) {
       handleSwitchWorkspace(customPath);
     } else {
@@ -152,14 +173,9 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
       <form onSubmit={handleSavePreferences} className="space-y-6">
         {/* Section 1: Switch Workspace Directory with Path Input & Recent Workspaces */}
         <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
-              <FolderSync className="w-4 h-4 text-emerald-400" />
-              <span>Active Local Workspace Path</span>
-            </div>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20 text-emerald-400">
-              Live Filesystem
-            </span>
+          <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
+            <FolderSync className="w-4 h-4 text-emerald-400" />
+            <span>Active Local Workspace Path</span>
           </div>
 
           <p className="text-xs text-slate-400 font-sans leading-relaxed">
@@ -281,14 +297,50 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         </div>
 
-        {/* Section 3: Monaco Studio Preferences */}
+        {/* Section 3: Monaco Studio & Appearance Preferences */}
         <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4">
           <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
             <Sliders className="w-4 h-4 text-emerald-400" />
-            <span>Monaco Studio Preferences</span>
+            <span>Studio Appearance & Editor Preferences</span>
           </div>
 
           <div className="space-y-3">
+            {/* Theme Appearance Mode (Dark / Light) */}
+            <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.04] bg-[#07090e]">
+              <div>
+                <div className="text-xs font-mono text-slate-200">Studio Theme Mode</div>
+                <div className="text-[11px] font-sans text-slate-400 mt-0.5">
+                  Choose between high-contrast dark mode or clean developer light mode.
+                </div>
+              </div>
+              <div className="flex items-center p-1 rounded-lg bg-black/20 border border-white/[0.06] gap-1">
+                <button
+                  type="button"
+                  onClick={() => setTheme("dark")}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono transition-all ${
+                    theme === "dark"
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm font-semibold"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Moon className="w-3.5 h-3.5 text-indigo-400" />
+                  <span>Dark</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTheme("light")}
+                  className={`flex items-center gap-1.5 px-3 py-1 rounded-md text-xs font-mono transition-all ${
+                    theme === "light"
+                      ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 shadow-sm font-semibold"
+                      : "text-slate-400 hover:text-slate-200"
+                  }`}
+                >
+                  <Sun className="w-3.5 h-3.5 text-amber-400" />
+                  <span>Light</span>
+                </button>
+              </div>
+            </div>
+
             {/* Auto-Save Toggle (Default ON) */}
             <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.04] bg-[#07090e]">
               <div>
@@ -326,7 +378,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
               <button
                 type="button"
-                onClick={() => setMinimap(!minimap)}
+                onClick={() => handleToggleMinimap(!minimap)}
                 className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${
                   minimap ? "bg-emerald-500" : "bg-white/[0.1]"
                 }`}
@@ -348,7 +400,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               </div>
               <button
                 type="button"
-                onClick={() => setAutoVerify(!autoVerify)}
+                onClick={() => handleToggleAutoVerify(!autoVerify)}
                 className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${
                   autoVerify ? "bg-emerald-500" : "bg-white/[0.1]"
                 }`}
@@ -384,7 +436,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         </div>
 
         {/* Save Bar */}
-        <div className="flex items-center justify-between pt-2">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 pt-2">
           <button
             type="button"
             onClick={onRefresh}
@@ -395,14 +447,30 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <span>Resync Local Workspace</span>
           </button>
 
-          <button
-            type="submit"
-            className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs font-mono transition-colors shadow-[0_0_15px_rgba(16,185,129,0.2)]"
-          >
-            Save Preferences
-          </button>
+          <div className="flex items-center gap-3">
+            {savedNotice && (
+              <div className="flex items-center gap-1.5 text-xs font-mono text-emerald-400 animate-in fade-in">
+                <Check className="w-3.5 h-3.5" />
+                <span>Saved successfully</span>
+              </div>
+            )}
+            <button
+              type="submit"
+              className="px-6 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs font-mono transition-colors shadow-[0_0_15px_rgba(16,185,129,0.2)] cursor-pointer"
+            >
+              Save Preferences
+            </button>
+          </div>
         </div>
       </form>
+
+      {/* Floating Bottom Toast Notification */}
+      {savedNotice && (
+        <div className="fixed bottom-6 right-6 z-50 flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#0e131f] border border-emerald-500/40 text-emerald-300 text-xs font-mono shadow-2xl animate-in slide-in-from-bottom-2">
+          <Check className="w-4 h-4 text-emerald-400 shrink-0" />
+          <span>{savedNotice}</span>
+        </div>
+      )}
     </div>
   );
 };

@@ -35,6 +35,7 @@ import {
   fetchFileTree,
 } from "../api";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "../context/ThemeContext";
 
 function findFirstFile(nodes: FileNode[]): string | null {
   for (const node of nodes) {
@@ -54,6 +55,7 @@ interface EditorPageProps {
 
 export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRefreshTree }) => {
   const navigate = useNavigate();
+  const { theme } = useTheme();
   const [tree, setTree] = useState<FileNode[]>(initialTree);
   const [selectedFile, setSelectedFile] = useState<string>(() => {
     return findFirstFile(initialTree) || "README.md";
@@ -65,6 +67,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
   const [saved, setSaved] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const autoSaveEnabled = localStorage.getItem("trak_autosave") !== "false";
+  const minimapEnabled = localStorage.getItem("trak_editor_minimap") !== "false";
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitialLoad = useRef<boolean>(true);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
@@ -682,13 +685,13 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
                     path={selectedFile}
                     language={getLanguage(selectedFile)}
                     value={code}
-                    theme="vs-dark"
+                    theme={theme === "light" ? "vs" : "vs-dark"}
                     onChange={(val) => setCode(val || "")}
                     options={{
                       fontFamily: "'JetBrains Mono', 'Fira Code', ui-monospace, Menlo, Monaco, Consolas, monospace",
                       fontSize: 13,
                       lineHeight: 20,
-                      minimap: { enabled: true },
+                      minimap: { enabled: minimapEnabled },
                       scrollBeyondLastLine: false,
                       automaticLayout: true,
                       renderLineHighlight: "all",

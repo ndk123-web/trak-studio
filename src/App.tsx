@@ -10,6 +10,7 @@ import { EditorPage } from "./pages/EditorPage";
 import { VerifyPage } from "./pages/VerifyPage";
 import { ManifestPage } from "./pages/ManifestPage";
 import { SettingsPage } from "./pages/SettingsPage";
+import { DocsPage } from "./pages/DocsPage";
 import { EmptyWorkspace } from "./components/EmptyWorkspace";
 import type { FileNode, StatusModel, WorkspaceInfo } from "./types";
 import { fetchFileTree, fetchStatus, fetchWorkspace, toggleModuleDone, setWorkspacePath } from "./api";
@@ -246,6 +247,10 @@ export function App() {
                       <ManifestPage status={status} />
                     )
                   }
+                />
+                <Route
+                  path="/docs"
+                  element={<DocsPage />}
                 />
                 <Route
                   path="/settings"
