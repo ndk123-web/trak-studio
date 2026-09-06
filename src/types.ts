@@ -10,6 +10,7 @@ export interface StatusModel {
   source: string;
   repository?: string;
   module_breakdown: Record<string, boolean>;
+  isMock?: boolean;
 }
 
 export interface WorkspaceInfo {
@@ -19,6 +20,7 @@ export interface WorkspaceInfo {
   totalFiles?: number;
   totalModules?: number;
   completedModules?: number;
+  isMock?: boolean;
 }
 
 export interface FileNode {

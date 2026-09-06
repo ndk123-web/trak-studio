@@ -6,16 +6,18 @@ import {
   PlayCircle,
   Settings,
 } from "lucide-react";
-import type { StatusModel } from "../types";
+import type { StatusModel, WorkspaceInfo } from "../types";
 
 interface TopBarProps {
   status: StatusModel | null;
+  workspace?: WorkspaceInfo | null;
   onRefresh: () => void;
   isLoading: boolean;
 }
 
 export const TopBar: React.FC<TopBarProps> = ({
   status,
+  workspace,
   onRefresh,
   isLoading,
 }) => {
@@ -41,18 +43,24 @@ export const TopBar: React.FC<TopBarProps> = ({
     ? Object.entries(status.module_breakdown || {}).find(([_, done]) => !done)?.[0] || null
     : null;
 
+  const isMock = !!(status?.isMock || workspace?.isMock);
+
   return (
     <header className="h-14 border-b border-white/[0.08] bg-[#07090e]/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between sticky top-0 z-10 select-none">
       {/* Left: Brand Logo & Breadcrumbs */}
       <div className="flex items-center gap-2.5 min-w-0">
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] shrink-0">
+        <button
+          onClick={() => navigate("/dashboard")}
+          title="Go to Dashboard"
+          className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] hover:border-white/[0.15] transition-all cursor-pointer shrink-0"
+        >
           <img
             src="/trak.png"
             alt="Trak Logo"
             className="w-4 h-4 object-contain"
           />
-          <span className="font-extrabold text-xs tracking-tight text-white font-mono">trak</span>
-        </div>
+          <span className="font-extrabold text-xs tracking-tight text-white font-mono">Trak</span>
+        </button>
 
         <ChevronRight className="w-3.5 h-3.5 text-slate-600 shrink-0" />
 
@@ -61,6 +69,13 @@ export const TopBar: React.FC<TopBarProps> = ({
           <ChevronRight className="w-3.5 h-3.5 text-slate-600 hidden sm:inline shrink-0" />
           <span className="text-emerald-400 font-semibold truncate">{getBreadcrumb()}</span>
         </div>
+
+        {isMock && (
+          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-amber-500/10 border border-amber-500/25 text-amber-300 text-[10px] font-mono shrink-0">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+            <span className="font-semibold uppercase tracking-wider">Mock Data</span>
+          </div>
+        )}
       </div>
 
       {/* Right Controls: Verify Next, Settings, Refresh */}

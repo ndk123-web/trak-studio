@@ -81,7 +81,10 @@ const MOCK_WORKSPACE_TREE: FileNode[] = [
 export async function fetchWorkspace(): Promise<WorkspaceInfo> {
   try {
     const res = await fetch(`${API_BASE}/api/workspace`, { signal: AbortSignal.timeout(2000) });
-    if (res.ok) return await res.json();
+    if (res.ok) {
+      const data = await res.json();
+      return { ...data, isMock: false };
+    }
   } catch {
     // Return mock if API not running
   }
@@ -92,17 +95,21 @@ export async function fetchWorkspace(): Promise<WorkspaceInfo> {
     totalModules: 20,
     completedModules: 2,
     totalFiles: 42,
+    isMock: true,
   };
 }
 
 export async function fetchStatus(): Promise<StatusModel> {
   try {
     const res = await fetch(`${API_BASE}/api/status`, { signal: AbortSignal.timeout(2000) });
-    if (res.ok) return await res.json();
+    if (res.ok) {
+      const data = await res.json();
+      return { ...data, isMock: false };
+    }
   } catch {
     // Return mock
   }
-  return MOCK_TRAK_JSON;
+  return { ...MOCK_TRAK_JSON, isMock: true };
 }
 
 export async function fetchFileTree(): Promise<FileNode[]> {

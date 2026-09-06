@@ -148,41 +148,68 @@ export function App() {
         <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden">
           <TopBar
             status={status}
+            workspace={workspace}
             onRefresh={loadData}
             isLoading={loading}
           />
 
           <main className="flex-1 overflow-y-auto bg-[#07090e]">
-            {!loading && workspace && !workspace.hasTrakJson ? (
-              <EmptyWorkspace workspace={workspace} />
-            ) : status ? (
+            {loading && !workspace ? (
+              <div className="h-full flex items-center justify-center text-xs font-mono text-slate-500">
+                Connecting to local workspace...
+              </div>
+            ) : (
               <Routes>
                 <Route path="/" element={<Navigate to="/dashboard" replace />} />
                 <Route
                   path="/dashboard"
                   element={
-                    <DashboardPage
-                      status={status}
-                      onToggleDone={handleToggleDone}
-                    />
+                    !workspace?.hasTrakJson || !status ? (
+                      <EmptyWorkspace
+                        workspace={workspace}
+                        onWorkspacePathChange={handleWorkspacePathChange}
+                        isLoading={loading || isSwitchingWorkspace}
+                      />
+                    ) : (
+                      <DashboardPage
+                        status={status}
+                        onToggleDone={handleToggleDone}
+                      />
+                    )
                   }
                 />
                 <Route
                   path="/modules"
                   element={
-                    <ModulesPage
-                      status={status}
-                      onToggleDone={handleToggleDone}
-                    />
+                    !workspace?.hasTrakJson || !status ? (
+                      <EmptyWorkspace
+                        workspace={workspace}
+                        onWorkspacePathChange={handleWorkspacePathChange}
+                        isLoading={loading || isSwitchingWorkspace}
+                      />
+                    ) : (
+                      <ModulesPage
+                        status={status}
+                        onToggleDone={handleToggleDone}
+                      />
+                    )
                   }
                 />
                 <Route
                   path="/modules/:moduleId"
                   element={
-                    <ModuleDetailPage
-                      status={status}
-                      onToggleDone={handleToggleDone}
-                    />
+                    !workspace?.hasTrakJson || !status ? (
+                      <EmptyWorkspace
+                        workspace={workspace}
+                        onWorkspacePathChange={handleWorkspacePathChange}
+                        isLoading={loading || isSwitchingWorkspace}
+                      />
+                    ) : (
+                      <ModuleDetailPage
+                        status={status}
+                        onToggleDone={handleToggleDone}
+                      />
+                    )
                   }
                 />
                 <Route
@@ -192,15 +219,33 @@ export function App() {
                 <Route
                   path="/verify"
                   element={
-                    <VerifyPage
-                      status={status}
-                      onToggleDone={handleToggleDone}
-                    />
+                    !workspace?.hasTrakJson || !status ? (
+                      <EmptyWorkspace
+                        workspace={workspace}
+                        onWorkspacePathChange={handleWorkspacePathChange}
+                        isLoading={loading || isSwitchingWorkspace}
+                      />
+                    ) : (
+                      <VerifyPage
+                        status={status}
+                        onToggleDone={handleToggleDone}
+                      />
+                    )
                   }
                 />
                 <Route
                   path="/manifest"
-                  element={<ManifestPage status={status} />}
+                  element={
+                    !workspace?.hasTrakJson || !status ? (
+                      <EmptyWorkspace
+                        workspace={workspace}
+                        onWorkspacePathChange={handleWorkspacePathChange}
+                        isLoading={loading || isSwitchingWorkspace}
+                      />
+                    ) : (
+                      <ManifestPage status={status} />
+                    )
+                  }
                 />
                 <Route
                   path="/settings"
@@ -209,17 +254,13 @@ export function App() {
                       workspace={workspace}
                       status={status}
                       onRefresh={loadData}
-                      isLoading={loading}
+                      isLoading={loading || isSwitchingWorkspace}
                       onWorkspacePathChange={handleWorkspacePathChange}
                     />
                   }
                 />
                 <Route path="*" element={<Navigate to="/dashboard" replace />} />
               </Routes>
-            ) : (
-              <div className="h-full flex items-center justify-center text-xs font-mono text-slate-500">
-                Connecting to local workspace...
-              </div>
             )}
           </main>
 

@@ -198,11 +198,16 @@ export const Sidebar: React.FC<SidebarProps> = ({
           </div>
           <div className="flex items-center gap-2 min-w-0">
             <span className="font-extrabold text-base tracking-tight text-white">
-              trak
+              Trak Studio
             </span>
-            <span className="text-[10px] font-mono px-1.5 py-0.2 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
+            <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
               v1.3.0
             </span>
+            {(status?.isMock || workspace?.isMock) && (
+              <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold uppercase tracking-wider">
+                Mock
+              </span>
+            )}
           </div>
         </div>
 

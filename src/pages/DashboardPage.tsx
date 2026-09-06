@@ -34,9 +34,10 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
       {/* Hero Welcome Banner */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.08]">
         <div>
-          <div className="flex items-center gap-2 mb-1 text-xs font-mono text-emerald-400 font-semibold">
-            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-            <span>LOCAL WORKSPACE DASHBOARD</span>
+          <div className="flex items-center gap-2 mb-1.5 text-xs font-mono text-slate-400 font-medium">
+            <span className="text-emerald-400 font-semibold">Trak</span>
+            <span className="text-slate-600">/</span>
+            <span className="text-slate-300">Workspace Dashboard</span>
           </div>
           <h1 className="font-serif text-2xl sm:text-3xl text-[#f5f4ef] tracking-tight">
             {status.name}
@@ -65,6 +66,27 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
           )}
         </div>
       </div>
+
+      {/* Mock Data Banner (Shown only when running on simulated/fallback data) */}
+      {status.isMock && (
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-500/[0.08] border border-amber-500/25 text-xs font-mono text-amber-300">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
+            <span className="font-bold uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200 shrink-0">
+              Mock Preview Mode
+            </span>
+            <span className="text-amber-200/90 truncate">
+              Currently displaying simulated demo data. Run <code className="text-amber-100 font-bold bg-black/30 px-1 py-0.5 rounded">trak studio</code> in an initialized workspace for live disk state.
+            </span>
+          </div>
+          <button
+            onClick={() => navigate("/settings")}
+            className="text-[11px] text-amber-300 hover:text-white underline underline-offset-2 shrink-0 transition-colors self-start sm:self-auto"
+          >
+            Change Workspace
+          </button>
+        </div>
+      )}
 
       {/* 3 Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">

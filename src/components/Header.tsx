@@ -63,8 +63,8 @@ export const Header: React.FC<HeaderProps> = ({
                   v1.3.0
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] font-mono text-emerald-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+              <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
+                <span className="text-emerald-400">●</span>
                 <span>Local Bridge Active</span>
               </div>
             </div>
