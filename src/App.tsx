@@ -214,7 +214,7 @@ export function App() {
                 />
                 <Route
                   path="/editor"
-                  element={<EditorPage tree={tree} />}
+                  element={<EditorPage tree={tree} onRefreshTree={loadData} />}
                 />
                 <Route
                   path="/verify"

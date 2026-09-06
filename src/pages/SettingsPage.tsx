@@ -54,7 +54,15 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const port = window.location.port || "8200";
   const [autoVerify, setAutoVerify] = useState(true);
   const [minimap, setMinimap] = useState(true);
+  const [autoSave, setAutoSave] = useState<boolean>(() => {
+    return localStorage.getItem("trak_autosave") !== "false";
+  });
   const [savedNotice, setSavedNotice] = useState<string | null>(null);
+
+  const handleToggleAutoSave = (val: boolean) => {
+    setAutoSave(val);
+    localStorage.setItem("trak_autosave", String(val));
+  };
 
   // Future hook states
   const [customTestCmd, setCustomTestCmd] = useState("go test -v ./...");
@@ -288,6 +296,34 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
 
           <div className="space-y-3">
+            {/* Auto-Save Toggle (Default ON) */}
+            <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.04] bg-[#07090e]">
+              <div>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-mono text-slate-200">Auto-Save Buffer & Files</span>
+                  <span className="text-[9px] font-mono uppercase px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
+                    Default ON
+                  </span>
+                </div>
+                <div className="text-[11px] font-sans text-slate-400 mt-0.5">
+                  Automatically persists file edits directly to disk 800ms after you stop typing.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => handleToggleAutoSave(!autoSave)}
+                className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${
+                  autoSave ? "bg-emerald-500" : "bg-white/[0.1]"
+                }`}
+              >
+                <div
+                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
+                    autoSave ? "translate-x-5" : "translate-x-1"
+                  }`}
+                />
+              </button>
+            </div>
+
             <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.04] bg-[#07090e]">
               <div>
                 <div className="text-xs font-mono text-slate-200">Editor Minimap</div>

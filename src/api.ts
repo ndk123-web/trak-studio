@@ -220,7 +220,10 @@ export async function saveFileContent(filePath: string, content: string): Promis
   }
 }
 
-export async function createWorkspaceItem(filePath: string, isDir: boolean): Promise<boolean> {
+export async function createWorkspaceItem(
+  filePath: string,
+  isDir: boolean
+): Promise<{ success: boolean; error?: string }> {
   try {
     const res = await fetch(`${API_BASE}/api/item`, {
       method: "POST",
@@ -228,13 +231,19 @@ export async function createWorkspaceItem(filePath: string, isDir: boolean): Pro
       body: JSON.stringify({ path: filePath, isDir }),
       signal: AbortSignal.timeout(5000),
     });
-    return res.ok;
-  } catch {
-    return false;
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      return { success: false, error: errText || `Failed to create item (HTTP ${res.status})` };
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: String(err) };
   }
 }
 
-export async function deleteWorkspaceItem(filePath: string): Promise<boolean> {
+export async function deleteWorkspaceItem(
+  filePath: string
+): Promise<{ success: boolean; error?: string }> {
   try {
     const res = await fetch(`${API_BASE}/api/item/delete`, {
       method: "POST",
@@ -242,9 +251,13 @@ export async function deleteWorkspaceItem(filePath: string): Promise<boolean> {
       body: JSON.stringify({ path: filePath }),
       signal: AbortSignal.timeout(5000),
     });
-    return res.ok;
-  } catch {
-    return false;
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      return { success: false, error: errText || `Failed to delete item (HTTP ${res.status})` };
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: String(err) };
   }
 }
 

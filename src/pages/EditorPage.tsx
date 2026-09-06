@@ -23,6 +23,8 @@ import {
   Code,
   Save,
   X,
+  RefreshCw,
+  AlertCircle,
 } from "lucide-react";
 import type { FileNode } from "../types";
 import {
@@ -30,6 +32,7 @@ import {
   saveFileContent,
   createWorkspaceItem,
   deleteWorkspaceItem,
+  fetchFileTree,
 } from "../api";
 import { useNavigate } from "react-router-dom";
 
@@ -46,18 +49,26 @@ function findFirstFile(nodes: FileNode[]): string | null {
 
 interface EditorPageProps {
   tree: FileNode[];
+  onRefreshTree?: () => Promise<void> | void;
 }
 
-export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => {
+export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRefreshTree }) => {
   const navigate = useNavigate();
   const [tree, setTree] = useState<FileNode[]>(initialTree);
   const [selectedFile, setSelectedFile] = useState<string>(() => {
     return findFirstFile(initialTree) || "README.md";
   });
   const [code, setCode] = useState<string>("");
+  const [lastSavedCode, setLastSavedCode] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
+  const [isSaving, setIsSaving] = useState<boolean>(false);
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(() => {
+    return localStorage.getItem("trak_autosave") !== "false";
+  });
+  const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isInitialLoad = useRef<boolean>(true);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
 
   // Slidable & Resizable editor sidebar width state
@@ -156,6 +167,8 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
   const [newDialog, setNewDialog] = useState<"file" | "folder" | null>(null);
   const [newItemName, setNewItemName] = useState<string>("");
   const [selectedFolderForNew, setSelectedFolderForNew] = useState<string>("");
+  const [isSubmittingItem, setIsSubmittingItem] = useState<boolean>(false);
+  const [itemError, setItemError] = useState<string | null>(null);
 
   useEffect(() => {
     setTree(initialTree);
@@ -179,9 +192,11 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
     if (!selectedFile) return;
     let active = true;
     setLoading(true);
+    isInitialLoad.current = true;
     fetchFileContent(selectedFile).then((data) => {
       if (active) {
         setCode(data.content);
+        setLastSavedCode(data.content);
         setLoading(false);
       }
     });
@@ -189,6 +204,37 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
       active = false;
     };
   }, [selectedFile]);
+
+  // Debounced Auto-Save effect
+  useEffect(() => {
+    if (isInitialLoad.current) {
+      isInitialLoad.current = false;
+      return;
+    }
+    if (!autoSaveEnabled || !selectedFile || loading) return;
+    if (code === lastSavedCode) return;
+
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+
+    autoSaveTimerRef.current = setTimeout(async () => {
+      setIsSaving(true);
+      const ok = await saveFileContent(selectedFile, code);
+      setIsSaving(false);
+      if (ok) {
+        setLastSavedCode(code);
+        setSaved(true);
+        setTimeout(() => setSaved(false), 2000);
+      }
+    }, 800);
+
+    return () => {
+      if (autoSaveTimerRef.current) {
+        clearTimeout(autoSaveTimerRef.current);
+      }
+    };
+  }, [code, autoSaveEnabled, selectedFile, loading, lastSavedCode]);
 
   // Keyboard shortcut Ctrl+S / Cmd+S
   useEffect(() => {
@@ -200,15 +246,27 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [code, selectedFile]);
+  }, [code, selectedFile, isSaving]);
 
   const handleSave = async () => {
-    if (!selectedFile) return;
+    if (!selectedFile || isSaving) return;
+    if (autoSaveTimerRef.current) {
+      clearTimeout(autoSaveTimerRef.current);
+    }
+    setIsSaving(true);
     const ok = await saveFileContent(selectedFile, code);
+    setIsSaving(false);
     if (ok) {
+      setLastSavedCode(code);
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     }
+  };
+
+  const toggleAutoSave = () => {
+    const next = !autoSaveEnabled;
+    setAutoSaveEnabled(next);
+    localStorage.setItem("trak_autosave", String(next));
   };
 
   const toggleFolder = (path: string) => {
@@ -223,36 +281,38 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
 
   const handleCreateItem = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newItemName.trim()) return;
+    if (!newItemName.trim() || isSubmittingItem) return;
 
     const trimmed = newItemName.trim();
     const fullPath = selectedFolderForNew ? `${selectedFolderForNew}/${trimmed}` : trimmed;
     const isDir = newDialog === "folder";
 
-    await createWorkspaceItem(fullPath, isDir);
+    setIsSubmittingItem(true);
+    setItemError(null);
 
-    if (newDialog === "file") {
-      const newFileNode: FileNode = {
-        name: trimmed.split("/").pop() || trimmed,
-        path: fullPath,
-        isDir: false,
-        size: 0,
-      };
-
-      setTree((prev) => [...prev, newFileNode]);
-      setSelectedFile(fullPath);
-      setCode(`// ${fullPath}\n\n`);
-    } else if (newDialog === "folder") {
-      const newFolderNode: FileNode = {
-        name: trimmed,
-        path: fullPath,
-        isDir: true,
-        children: [],
-      };
-      setTree((prev) => [...prev, newFolderNode]);
-      setExpandedFolders((prev) => ({ ...prev, [fullPath]: true }));
+    const result = await createWorkspaceItem(fullPath, isDir);
+    if (!result.success) {
+      setItemError(result.error || "Failed to create item.");
+      setIsSubmittingItem(false);
+      return;
     }
 
+    // Refresh tree from live filesystem
+    const freshTree = await fetchFileTree();
+    setTree(freshTree);
+    if (onRefreshTree) {
+      await onRefreshTree();
+    }
+
+    if (isDir) {
+      setExpandedFolders((prev) => ({ ...prev, [fullPath]: true }));
+    } else {
+      setSelectedFile(fullPath);
+      setCode(`// ${fullPath}\n\n`);
+      setLastSavedCode(`// ${fullPath}\n\n`);
+    }
+
+    setIsSubmittingItem(false);
     setNewItemName("");
     setNewDialog(null);
     setSelectedFolderForNew("");
@@ -261,10 +321,19 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
   const handleDeleteItem = async (path: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm(`Are you sure you want to delete '${path}'?`)) {
-      await deleteWorkspaceItem(path);
-      setTree((prev) => prev.filter((item) => item.path !== path));
-      if (selectedFile === path) {
-        setSelectedFile("README.md");
+      const res = await deleteWorkspaceItem(path);
+      if (res.success) {
+        const freshTree = await fetchFileTree();
+        setTree(freshTree);
+        if (onRefreshTree) {
+          await onRefreshTree();
+        }
+        if (selectedFile === path) {
+          const first = findFirstFile(freshTree);
+          setSelectedFile(first || "README.md");
+        }
+      } else {
+        alert(res.error || `Failed to delete '${path}'`);
       }
     }
   };
@@ -323,17 +392,39 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
                   <span className="truncate">{node.name}</span>
                 </div>
 
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedFolderForNew(node.path);
-                    setNewDialog("file");
-                  }}
-                  className="opacity-0 group-hover:opacity-100 p-0.5 hover:text-white transition-opacity"
-                  title="Add file inside this folder"
-                >
-                  <FilePlus className="w-3 h-3 text-slate-400 hover:text-emerald-400" />
-                </button>
+                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedFolderForNew(node.path);
+                      setItemError(null);
+                      setNewDialog("file");
+                    }}
+                    className="p-0.5 hover:text-white"
+                    title="Add file inside this folder"
+                  >
+                    <FilePlus className="w-3 h-3 text-slate-400 hover:text-emerald-400" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedFolderForNew(node.path);
+                      setItemError(null);
+                      setNewDialog("folder");
+                    }}
+                    className="p-0.5 hover:text-white"
+                    title="Add subfolder inside this folder"
+                  >
+                    <FolderPlus className="w-3 h-3 text-slate-400 hover:text-emerald-400" />
+                  </button>
+                  <button
+                    onClick={(e) => handleDeleteItem(node.path, e)}
+                    className="p-0.5 text-slate-500 hover:text-red-400"
+                    title="Delete folder"
+                  >
+                    <Trash2 className="w-3 h-3" />
+                  </button>
+                </div>
               </div>
               {isExpanded && node.children && (
                 <div>{renderTree(node.children, depth + 1)}</div>
@@ -442,15 +533,53 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 shrink-0">
+          {/* Quick Auto-Save Toggle Pill */}
+          <button
+            onClick={toggleAutoSave}
+            title={`Auto-Save is currently ${autoSaveEnabled ? "Enabled (saves 800ms after typing)" : "Disabled"}. Click to toggle.`}
+            className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono border transition-colors cursor-pointer ${
+              autoSaveEnabled
+                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/25 hover:bg-emerald-500/20"
+                : "bg-white/[0.03] text-slate-400 border-white/[0.06] hover:bg-white/[0.06]"
+            }`}
+          >
+            <span
+              className={`w-1.5 h-1.5 rounded-full ${
+                autoSaveEnabled ? "bg-emerald-400" : "bg-slate-500"
+              }`}
+            />
+            <span>Auto-Save: {autoSaveEnabled ? "ON" : "OFF"}</span>
+          </button>
+
+          {/* Save Status / Button */}
           <button
             onClick={handleSave}
-            className="flex items-center gap-1.5 px-3 py-1 rounded bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/[0.08] text-xs font-mono transition-colors"
+            disabled={isSaving}
+            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-mono border transition-colors cursor-pointer ${
+              isSaving
+                ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30 cursor-wait"
+                : saved
+                ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
+                : code !== lastSavedCode
+                ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30 font-medium"
+                : "bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border-white/[0.08]"
+            }`}
             title="Save Buffer (Ctrl+S)"
           >
-            {saved ? (
+            {isSaving ? (
+              <>
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                <span>Saving...</span>
+              </>
+            ) : saved ? (
               <>
                 <Check className="w-3.5 h-3.5 text-emerald-400" />
                 <span className="text-emerald-400">Saved</span>
+              </>
+            ) : code !== lastSavedCode ? (
+              <>
+                <span className="w-1.5 h-1.5 rounded-full bg-amber-400 shrink-0" />
+                <span>Save *</span>
               </>
             ) : (
               <>
@@ -553,8 +682,16 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
         {/* Center / Right: Monaco Editor or Markdown Preview */}
         <div className="flex-1 flex flex-col bg-[#090b10] min-w-0">
           {loading ? (
-            <div className="flex-1 flex items-center justify-center font-mono text-xs text-slate-500">
-              Loading buffer in Monaco Editor...
+            <div className="flex-1 flex flex-col items-center justify-center gap-3 bg-[#080a10]">
+              <div className="w-8 h-8 rounded-full border-2 border-emerald-500/20 border-t-emerald-400 animate-spin" />
+              <div className="flex flex-col items-center gap-1 text-center">
+                <span className="font-mono text-xs text-slate-200 font-semibold">
+                  {selectedFile ? selectedFile.split("/").pop() : "File"}
+                </span>
+                <span className="font-mono text-[11px] text-slate-500">
+                  Loading buffer from workspace filesystem...
+                </span>
+              </div>
             </div>
           ) : (
             <div ref={splitContainerRef} className="flex-1 flex overflow-hidden relative">
@@ -641,50 +778,96 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
 
       {/* New File / Folder Modal Dialog */}
       {newDialog && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <div className="rounded-xl border border-white/[0.1] bg-[#090b10] p-5 w-full max-w-sm space-y-4 shadow-2xl">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
+          <div className="rounded-xl border border-white/[0.1] bg-[#090b10] p-5 w-full max-w-md space-y-4 shadow-2xl">
             <div className="flex items-center justify-between">
-              <h3 className="font-mono text-sm font-semibold text-[#f5f4ef]">
-                Create New {newDialog === "file" ? "File" : "Folder"}
-              </h3>
+              <div className="flex items-center gap-2">
+                {newDialog === "file" ? (
+                  <FilePlus className="w-4 h-4 text-emerald-400" />
+                ) : (
+                  <FolderPlus className="w-4 h-4 text-emerald-400" />
+                )}
+                <h3 className="font-mono text-sm font-semibold text-[#f5f4ef]">
+                  Create New {newDialog === "file" ? "File" : "Folder"}
+                </h3>
+              </div>
               <button
-                onClick={() => setNewDialog(null)}
-                className="text-slate-500 hover:text-white"
+                onClick={() => {
+                  setNewDialog(null);
+                  setItemError(null);
+                }}
+                className="text-slate-500 hover:text-white transition-colors"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {selectedFolderForNew && (
-              <div className="text-[11px] font-mono text-slate-400">
-                Inside: <code className="text-emerald-400">{selectedFolderForNew}/</code>
+            {/* Target Location Preview & Switcher */}
+            <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs font-mono">
+              <span className="text-slate-400">Target Location:</span>
+              <div className="flex items-center gap-2">
+                <code className="text-emerald-400 font-bold truncate max-w-[200px]">
+                  {selectedFolderForNew ? `${selectedFolderForNew}/` : "<root> /"}
+                </code>
+                {selectedFolderForNew && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedFolderForNew("")}
+                    className="text-[10px] text-slate-400 hover:text-amber-300 underline underline-offset-2"
+                    title="Change to Root directory"
+                  >
+                    Switch to Root
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {itemError && (
+              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-xs font-mono">
+                <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
+                <span className="truncate">{itemError}</span>
               </div>
             )}
 
             <form onSubmit={handleCreateItem} className="space-y-3">
-              <input
-                autoFocus
-                type="text"
-                placeholder={newDialog === "file" ? "e.g. exercise.go or notes.md" : "e.g. exercises"}
-                value={newItemName}
-                onChange={(e) => setNewItemName(e.target.value)}
-                className="w-full px-3 py-2 rounded-lg bg-[#07090e] border border-white/[0.1] text-xs font-mono text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50"
-              />
+              <div>
+                <label className="block text-[11px] font-mono text-slate-400 mb-1">
+                  {newDialog === "file" ? "File Name (with extension)" : "Folder Name"}
+                </label>
+                <input
+                  autoFocus
+                  type="text"
+                  placeholder={newDialog === "file" ? "e.g. main.go, notes.md, util.js" : "e.g. exercises, internal, tests"}
+                  value={newItemName}
+                  onChange={(e) => setNewItemName(e.target.value)}
+                  className="w-full px-3 py-2 rounded-lg bg-[#07090e] border border-white/[0.1] text-xs font-mono text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50"
+                />
+              </div>
 
               <div className="flex justify-end gap-2 pt-2">
                 <button
                   type="button"
-                  onClick={() => setNewDialog(null)}
-                  className="px-3 py-1.5 rounded-lg bg-white/[0.04] text-slate-400 hover:text-white text-xs font-mono"
+                  onClick={() => {
+                    setNewDialog(null);
+                    setItemError(null);
+                  }}
+                  className="px-3 py-1.5 rounded-lg bg-white/[0.04] text-slate-400 hover:text-white text-xs font-mono transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
-                  disabled={!newItemName.trim()}
-                  className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs font-mono transition-colors disabled:opacity-50"
+                  disabled={!newItemName.trim() || isSubmittingItem}
+                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs font-mono transition-colors disabled:opacity-50 cursor-pointer"
                 >
-                  Create {newDialog === "file" ? "File" : "Folder"}
+                  {isSubmittingItem ? (
+                    <>
+                      <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                      <span>Creating...</span>
+                    </>
+                  ) : (
+                    <span>Create {newDialog === "file" ? "File" : "Folder"}</span>
+                  )}
                 </button>
               </div>
             </form>
