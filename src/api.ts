@@ -278,3 +278,72 @@ export async function setWorkspacePath(newPath: string): Promise<{ success: bool
     return { success: false, error: String(err) };
   }
 }
+
+export interface WorkspaceHistoryItem {
+  path: string;
+  name: string;
+  lastOpened: string;
+  trackId?: string;
+}
+
+export async function fetchWorkspacesHistory(): Promise<WorkspaceHistoryItem[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/workspaces`, { signal: AbortSignal.timeout(2000) });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        localStorage.setItem("trak_workspaces_history", JSON.stringify(data));
+        return data;
+      }
+    }
+  } catch {
+    // API unavailable
+  }
+  const saved = localStorage.getItem("trak_workspaces_history");
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (Array.isArray(parsed)) return parsed;
+    } catch {
+      // ignore
+    }
+  }
+  return [];
+}
+
+export async function deleteWorkspaceHistoryItem(targetPath: string): Promise<WorkspaceHistoryItem[]> {
+  try {
+    const res = await fetch(`${API_BASE}/api/workspaces?path=${encodeURIComponent(targetPath)}`, {
+      method: "DELETE",
+      signal: AbortSignal.timeout(2500),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (Array.isArray(data)) {
+        localStorage.setItem("trak_workspaces_history", JSON.stringify(data));
+        return data;
+      }
+    }
+  } catch {
+    // fallback
+  }
+  const current = await fetchWorkspacesHistory();
+  const updated = current.filter((item) => item.path !== targetPath);
+  localStorage.setItem("trak_workspaces_history", JSON.stringify(updated));
+  return updated;
+}
+
+export async function browseWorkspaceFolder(): Promise<{ success: boolean; path?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/browse`, { signal: AbortSignal.timeout(60000) });
+    if (res.ok) {
+      const data = await res.json();
+      return data;
+    }
+  } catch (err) {
+    console.warn("Native browse failed:", err);
+  }
+  return { success: false };
+}
+
+

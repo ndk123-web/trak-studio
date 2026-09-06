@@ -80,21 +80,33 @@ html.light .bg-\[\#07080d\] {
 html.light .bg-\[\#090b10\] {
   background-color: #ffffff !important;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);
+  border-color: #e2e8f0 !important;
 }
 
 html.light .bg-\[\#0c0f17\],
 html.light .bg-\[\#0e131f\] {
-  background-color: #f1f5f9 !important;
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
+}
+
+html.light .bg-\[\#050608\] {
+  background-color: #f8fafc !important;
+  border-color: #e2e8f0 !important;
 }
 
 /* Border utilities */
+html.light .border-white\/\[0\.15\],
+html.light .border-white\/\[0\.12\],
+html.light .border-white\/\[0\.1\],
 html.light .border-white\/\[0\.08\],
 html.light .border-white\/\[0\.07\],
 html.light .border-white\/\[0\.06\],
 html.light .border-white\/\[0\.05\],
-html.light .border-white\/\[0\.04\],
-html.light .border-white\/\[0\.1\],
-html.light .border-white\/\[0\.15\] {
+html.light .border-white\/\[0\.04\] {
+  border-color: #e2e8f0 !important;
+}
+
+html.light .divide-white\/\[0\.04\] > * {
   border-color: #e2e8f0 !important;
 }
 
@@ -136,15 +148,20 @@ html.light .text-\[\#f5f4ef\] {
 }
 
 /* Interactive elements and pills */
+html.light .bg-white\/\[0\.01\],
+html.light .bg-white\/\[0\.02\],
 html.light .bg-white\/\[0\.03\],
 html.light .bg-white\/\[0\.04\],
 html.light .bg-white\/\[0\.05\],
 html.light .bg-white\/\[0\.06\],
-html.light .bg-white\/\[0\.08\] {
+html.light .bg-white\/\[0\.08\],
+html.light .bg-white\/\[0\.1\] {
   background-color: #f1f5f9 !important;
   color: #1e293b !important;
+  border-color: #e2e8f0 !important;
 }
 
+html.light .hover\:bg-white\/\[0\.02\]:hover,
 html.light .hover\:bg-white\/\[0\.03\]:hover,
 html.light .hover\:bg-white\/\[0\.04\]:hover,
 html.light .hover\:bg-white\/\[0\.05\]:hover,
@@ -154,8 +171,22 @@ html.light .hover\:bg-white\/\[0\.08\]:hover {
   color: #0f172a !important;
 }
 
-html.light .bg-black\/20 {
+html.light .bg-black\/20,
+html.light .bg-black\/30,
+html.light .bg-black\/40 {
   background-color: #f1f5f9 !important;
+  border-color: #e2e8f0 !important;
+  color: #0f172a !important;
+}
+
+/* Light mode table row styling */
+html.light table tr:hover {
+  background-color: #f8fafc !important;
+}
+
+html.light thead {
+  background-color: #f1f5f9 !important;
+  color: #475569 !important;
   border-color: #e2e8f0 !important;
 }
 
@@ -224,3 +255,50 @@ html.light input::placeholder,
 html.light textarea::placeholder {
   color: #94a3b8 !important;
 }
+
+/* Dedicated Terminal Window High-Contrast Styling (Both Themes) */
+.terminal-window,
+.terminal-container {
+  background-color: #07090e !important;
+  color: #f1f5f9 !important;
+  border-color: #1e293b !important;
+}
+
+.terminal-header {
+  background-color: #0b0f19 !important;
+  border-color: #1e293b !important;
+  color: #94a3b8 !important;
+}
+
+.terminal-body {
+  background-color: #0b0f19 !important;
+  color: #f1f5f9 !important;
+}
+
+/* Ensure light mode never washes out or darkens code terminal text */
+html.light .terminal-window,
+html.light .terminal-container,
+html.light .terminal-window pre,
+html.light .terminal-container pre,
+html.light .terminal-body,
+html.light .terminal-body pre,
+html.light .terminal-body code {
+  background-color: #0b0f19 !important;
+  color: #f1f5f9 !important;
+}
+
+html.light .terminal-body .text-emerald-300,
+html.light .terminal-body .text-emerald-400 {
+  color: #34d399 !important;
+}
+
+html.light .terminal-body .text-red-300,
+html.light .terminal-body .text-red-400 {
+  color: #f87171 !important;
+}
+
+html.light .terminal-body .text-slate-400,
+html.light .terminal-body .text-slate-500 {
+  color: #94a3b8 !important;
+}
+
