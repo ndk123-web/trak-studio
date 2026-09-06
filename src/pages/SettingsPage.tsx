@@ -8,12 +8,10 @@ import {
   Check,
   RefreshCw,
   FolderOpen,
-  Terminal,
   Globe,
   ArrowRight,
   Clock,
   Trash2,
-  Radio,
   AlertCircle,
 } from "lucide-react";
 import type { StatusModel, WorkspaceInfo } from "../types";
@@ -63,11 +61,6 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     setAutoSave(val);
     localStorage.setItem("trak_autosave", String(val));
   };
-
-  // Future hook states
-  const [customTestCmd, setCustomTestCmd] = useState("go test -v ./...");
-  const [webhookUrl, setWebhookUrl] = useState("");
-  const [autoGitCommit, setAutoGitCommit] = useState(false);
 
   useEffect(() => {
     if (workspace?.cwd && !customPath) {
@@ -370,78 +363,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
         </div>
 
-        {/* Section 4: Future Extensibility & Webhooks (Footer / Future-proofing) */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
-              <Sliders className="w-4 h-4 text-emerald-400" />
-              <span>Future Integrations & Automation Hooks</span>
-            </div>
-            <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.04] text-slate-400 border border-white/[0.06]">
-              Extensible
-            </span>
-          </div>
-          <p className="text-xs text-slate-400 font-sans leading-relaxed">
-            Configure future automation hooks such as custom test runners, Discord progress webhooks, or auto-git checkpoints.
-          </p>
-
-          <div className="space-y-3">
-            {/* Custom Test Command Override */}
-            <div className="p-3 rounded-xl border border-white/[0.04] bg-[#07090e] space-y-1.5">
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-200">
-                <Terminal className="w-3.5 h-3.5 text-slate-400" />
-                <span>Custom Verification Command</span>
-              </div>
-              <input
-                type="text"
-                value={customTestCmd}
-                onChange={(e) => setCustomTestCmd(e.target.value)}
-                placeholder="e.g. go test -v ./... or cargo test"
-                className="w-full px-3 py-1.5 rounded-lg bg-[#0c0f17] border border-white/[0.06] text-xs font-mono text-slate-300 focus:outline-none focus:border-emerald-500/50"
-              />
-            </div>
-
-            {/* Webhook / Discord Notification URL */}
-            <div className="p-3 rounded-xl border border-white/[0.04] bg-[#07090e] space-y-1.5">
-              <div className="flex items-center gap-2 text-xs font-mono text-slate-200">
-                <Radio className="w-3.5 h-3.5 text-slate-400" />
-                <span>Progress Webhook Endpoint (Discord / Slack)</span>
-              </div>
-              <input
-                type="text"
-                value={webhookUrl}
-                onChange={(e) => setWebhookUrl(e.target.value)}
-                placeholder="https://discordapp.com/api/webhooks/..."
-                className="w-full px-3 py-1.5 rounded-lg bg-[#0c0f17] border border-white/[0.06] text-xs font-mono text-slate-300 focus:outline-none focus:border-emerald-500/50"
-              />
-            </div>
-
-            {/* Auto Git Commit */}
-            <div className="flex items-center justify-between p-3 rounded-xl border border-white/[0.04] bg-[#07090e]">
-              <div>
-                <div className="text-xs font-mono text-slate-200">Auto Git Commit on Module Pass</div>
-                <div className="text-[11px] font-sans text-slate-500">
-                  Automatically create a git checkpoint commit when all assertions in a module pass.
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={() => setAutoGitCommit(!autoGitCommit)}
-                className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${
-                  autoGitCommit ? "bg-emerald-500" : "bg-white/[0.1]"
-                }`}
-              >
-                <div
-                  className={`w-4 h-4 rounded-full bg-white transition-transform ${
-                    autoGitCommit ? "translate-x-5" : "translate-x-1"
-                  }`}
-                />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Section 5: Upstream Registry */}
+        {/* Section 4: Upstream Registry */}
         <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4">
           <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
             <Globe className="w-4 h-4 text-emerald-400" />

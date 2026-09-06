@@ -79,10 +79,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
 
   const [searchFilter, setSearchFilter] = useState<string>("");
   const [viewMode, setViewMode] = useState<"code" | "preview" | "split">("code");
-  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({
-    "00-setup-and-prerequisites": true,
-    "01-runtime-and-escape-analysis": true,
-  });
+  const [expandedFolders, setExpandedFolders] = useState<Record<string, boolean>>({});
 
   // Resizable drag handle logic for editor explorer
   useEffect(() => {
@@ -175,14 +172,6 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
       if (first && (!selectedFile || selectedFile.startsWith("00-setup-and-prerequisites"))) {
         setSelectedFile(first);
       }
-      // Expand top-level folders automatically
-      const autoExpand: Record<string, boolean> = {};
-      initialTree.forEach((node) => {
-        if (node.isDir) {
-          autoExpand[node.path] = true;
-        }
-      });
-      setExpandedFolders((prev) => ({ ...autoExpand, ...prev }));
     }
   }, [initialTree]);
 
@@ -564,12 +553,21 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
           </button>
 
           <button
-            onClick={() => navigate("/verify")}
-            className="flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-medium transition-colors"
-            title="Run Verify Test"
+            onClick={() => {
+              const activeModule = selectedFile && selectedFile.includes("/") ? selectedFile.split("/")[0] : null;
+              if (activeModule) {
+                navigate(`/verify?module=${encodeURIComponent(activeModule)}&run=true`);
+              } else {
+                navigate("/verify");
+              }
+            }}
+            className="flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-medium transition-colors cursor-pointer"
+            title={selectedFile && selectedFile.includes("/") ? `Verify assertions for module: ${selectedFile.split("/")[0]}` : "Run Verify Test"}
           >
             <PlayCircle className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">Verify</span>
+            <span className="hidden sm:inline">
+              Verify {selectedFile && selectedFile.includes("/") ? `(${selectedFile.split("/")[0].slice(0, 16)}...)` : ""}
+            </span>
           </button>
 
           <button

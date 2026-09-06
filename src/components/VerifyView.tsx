@@ -11,12 +11,14 @@ import { runVerify } from "../api";
 interface VerifyViewProps {
   status: StatusModel;
   defaultModule?: string;
+  autoRun?: boolean;
   onToggleDone: (moduleName: string, done: boolean) => void;
 }
 
 export const VerifyView: React.FC<VerifyViewProps> = ({
   status,
   defaultModule,
+  autoRun,
   onToggleDone,
 }) => {
   const modules = Object.keys(status.module_breakdown || {}).sort((a, b) =>
@@ -29,22 +31,27 @@ export const VerifyView: React.FC<VerifyViewProps> = ({
   const [running, setRunning] = useState(false);
   const [result, setResult] = useState<VerifyResult | null>(null);
 
-  const isCurrentDone = !!status.module_breakdown?.[selectedModule];
+  React.useEffect(() => {
+    if (defaultModule && modules.includes(defaultModule)) {
+      setSelectedModule(defaultModule);
+    }
+  }, [defaultModule]);
 
-  const handleRunVerify = async () => {
-    if (!selectedModule) return;
+  const handleRunVerify = React.useCallback(async (moduleToRun?: string) => {
+    const mod = typeof moduleToRun === "string" ? moduleToRun : selectedModule;
+    if (!mod) return;
     setRunning(true);
     setResult(null);
 
     try {
-      const res = await runVerify(selectedModule);
+      const res = await runVerify(mod);
       setResult(res);
-      if (res.passed && !isCurrentDone) {
-        onToggleDone(selectedModule, true);
+      if (res.passed && !status.module_breakdown?.[mod]) {
+        onToggleDone(mod, true);
       }
     } catch (err) {
       setResult({
-        module: selectedModule,
+        module: mod,
         passed: false,
         output: `Error executing verification: ${String(err)}`,
         durationMs: 0,
@@ -53,7 +60,16 @@ export const VerifyView: React.FC<VerifyViewProps> = ({
     } finally {
       setRunning(false);
     }
-  };
+  }, [selectedModule, status.module_breakdown, onToggleDone]);
+
+  React.useEffect(() => {
+    if (autoRun) {
+      const mod = defaultModule || selectedModule;
+      if (mod) {
+        handleRunVerify(mod);
+      }
+    }
+  }, []);
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
@@ -89,7 +105,7 @@ export const VerifyView: React.FC<VerifyViewProps> = ({
 
           {/* Action Button */}
           <button
-            onClick={handleRunVerify}
+            onClick={() => handleRunVerify()}
             disabled={running}
             className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-mono font-bold transition-colors disabled:opacity-50 shadow-[0_0_15px_rgba(16,185,129,0.2)]"
           >
