@@ -57,7 +57,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
           <span className="font-semibold text-slate-200">Trak Studio</span>
           <span className="text-[10px] px-1 py-0.2 rounded bg-white/[0.06] text-emerald-400 font-bold border border-white/[0.06]">
-            v1.3.0
+            v1.0.0
           </span>
         </div>
 

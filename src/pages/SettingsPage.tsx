@@ -271,7 +271,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <div className="p-3.5 rounded-xl border border-white/[0.06] bg-[#07090e] space-y-1">
               <div className="text-[10px] font-mono text-slate-500 uppercase">Studio Version</div>
               <div className="flex items-center gap-1.5">
-                <span className="text-sm font-mono font-bold text-[#f5f4ef]">v1.3.0</span>
+                <span className="text-sm font-mono font-bold text-[#f5f4ef]">v1.0.0</span>
                 <span className="text-[9px] px-1 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-bold">
                   LATEST
                 </span>
@@ -286,7 +286,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <div className="p-3.5 rounded-xl border border-white/[0.06] bg-[#07090e] space-y-1">
               <div className="text-[10px] font-mono text-slate-500 uppercase">CLI Manifest Version</div>
               <div className="text-sm font-mono font-bold text-slate-300">
-                {status?.version ? `v${status.version}` : "v1.3.0"}
+                {status?.version ? `v${status.version}` : "v2.0.0"}
               </div>
             </div>
 
