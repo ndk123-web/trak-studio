@@ -64,9 +64,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
   const [copied, setCopied] = useState<boolean>(false);
   const [saved, setSaved] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
-  const [autoSaveEnabled, setAutoSaveEnabled] = useState<boolean>(() => {
-    return localStorage.getItem("trak_autosave") !== "false";
-  });
+  const autoSaveEnabled = localStorage.getItem("trak_autosave") !== "false";
   const autoSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isInitialLoad = useRef<boolean>(true);
   const [sidebarOpen, setSidebarOpen] = useState<boolean>(true);
@@ -261,12 +259,6 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     }
-  };
-
-  const toggleAutoSave = () => {
-    const next = !autoSaveEnabled;
-    setAutoSaveEnabled(next);
-    localStorage.setItem("trak_autosave", String(next));
   };
 
   const toggleFolder = (path: string) => {
@@ -533,24 +525,6 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
 
         {/* Action Buttons */}
         <div className="flex items-center gap-2 shrink-0">
-          {/* Quick Auto-Save Toggle Pill */}
-          <button
-            onClick={toggleAutoSave}
-            title={`Auto-Save is currently ${autoSaveEnabled ? "Enabled (saves 800ms after typing)" : "Disabled"}. Click to toggle.`}
-            className={`hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded text-xs font-mono border transition-colors cursor-pointer ${
-              autoSaveEnabled
-                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/25 hover:bg-emerald-500/20"
-                : "bg-white/[0.03] text-slate-400 border-white/[0.06] hover:bg-white/[0.06]"
-            }`}
-          >
-            <span
-              className={`w-1.5 h-1.5 rounded-full ${
-                autoSaveEnabled ? "bg-emerald-400" : "bg-slate-500"
-              }`}
-            />
-            <span>Auto-Save: {autoSaveEnabled ? "ON" : "OFF"}</span>
-          </button>
-
           {/* Save Status / Button */}
           <button
             onClick={handleSave}
