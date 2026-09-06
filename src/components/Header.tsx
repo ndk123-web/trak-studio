@@ -60,7 +60,7 @@ export const Header: React.FC<HeaderProps> = ({
                   Trak Studio
                 </span>
                 <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-white/[0.06] text-slate-300 border border-white/[0.08]">
-                  v1.3.0
+                  v1.0.0
                 </span>
               </div>
               <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400">

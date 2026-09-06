@@ -31,13 +31,14 @@ export const TopBar: React.FC<TopBarProps> = ({
   const getBreadcrumb = () => {
     const path = location.pathname;
     if (path === "/" || path === "/dashboard") return "Dashboard";
+    if (path === "/workspaces") return "Workspaces Hub";
     if (path.startsWith("/modules/")) {
       const id = path.replace("/modules/", "");
       return `Module: ${decodeURIComponent(id)}`;
     }
     if (path === "/modules") return "Curriculum Roadmap";
     if (path === "/editor") return "Code Editor";
-    if (path === "/verify") return "Assertion Runner";
+    if (path === "/verify") return "Test Runner";
     if (path === "/manifest") return "Manifest (trak.json)";
     if (path === "/docs") return "Documentation";
     if (path === "/settings") return "Settings";

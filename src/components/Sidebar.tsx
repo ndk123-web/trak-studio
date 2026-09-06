@@ -12,6 +12,7 @@ import {
   Server,
   Settings,
   BookOpen,
+  Briefcase,
   PanelLeft,
   PanelLeftClose,
 } from "lucide-react";
@@ -87,7 +88,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
   const currentPort = window.location.port || "8200";
 
-  const navItems = [
+  const curriculumNavItems = [
     {
       to: "/dashboard",
       label: "Dashboard",
@@ -108,21 +109,30 @@ export const Sidebar: React.FC<SidebarProps> = ({
     },
     {
       to: "/verify",
-      label: "Assertion Runner",
+      label: "Test Runner",
       icon: PlayCircle,
       badge: `${completedCount}/${totalCount}`,
     },
+  ];
+
+  const toolsNavItems = [
     {
-      to: "/manifest",
-      label: "trak.json Manifest",
-      icon: FileCode2,
-      badge: status?.version ? `v${status.version}` : null,
+      to: "/workspaces",
+      label: "Workspaces Hub",
+      icon: Briefcase,
+      badge: null,
     },
     {
       to: "/docs",
       label: "Documentation",
       icon: BookOpen,
       badge: null,
+    },
+    {
+      to: "/manifest",
+      label: "trak.json Manifest",
+      icon: FileCode2,
+      badge: status?.version ? `v${status.version}` : null,
     },
     {
       to: "/settings",
@@ -148,7 +158,29 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         {/* Navigation Items (Collapsed) */}
         <nav className="flex-1 px-2 py-4 space-y-2 w-full flex flex-col items-center overflow-y-auto">
-          {navItems.map((item) => {
+          {curriculumNavItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                title={item.label}
+                className={({ isActive }) =>
+                  `p-2.5 rounded-xl flex items-center justify-center transition-all ${
+                    isActive
+                      ? "bg-white/[0.08] text-white shadow-sm border border-white/[0.08]"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
+                  }`
+                }
+              >
+                <Icon className="w-4 h-4" />
+              </NavLink>
+            );
+          })}
+
+          <div className="w-6 h-px bg-white/[0.08] my-1.5" />
+
+          {toolsNavItems.map((item) => {
             const Icon = item.icon;
             return (
               <NavLink
@@ -213,7 +245,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               Trak Studio
             </span>
             <span className="text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-              v1.3.0
+              v1.0.0
             </span>
             {(status?.isMock || workspace?.isMock) && (
               <span className="text-[9px] font-mono px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold uppercase tracking-wider">
@@ -259,38 +291,73 @@ export const Sidebar: React.FC<SidebarProps> = ({
         </div>
       )}
 
-      {/* 3. Navigation Links */}
-      <nav className="flex-1 px-3 space-y-1 overflow-y-auto no-scrollbar py-2">
-        <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500 px-2 py-1 font-semibold">
-          Views
+      {/* 3. Grouped Navigation Links (Curriculum vs Workspace & Tools) */}
+      <nav className="flex-1 px-3 space-y-4 overflow-y-auto no-scrollbar py-2">
+        {/* Section 1: Curriculum Track */}
+        <div className="space-y-1">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500 px-2.5 py-1 font-bold">
+            Curriculum Track
+          </div>
+          {curriculumNavItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-mono font-medium transition-all group ${
+                    isActive
+                      ? "bg-white/[0.08] text-emerald-300 border border-emerald-500/30 shadow-sm"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
+                  }`
+                }
+              >
+                <div className="flex items-center gap-2.5 truncate">
+                  <Icon className="w-4 h-4 text-slate-400 group-hover:text-emerald-400 transition-colors shrink-0" />
+                  <span className="truncate">{item.label}</span>
+                </div>
+                {item.badge && (
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.06] text-slate-400 shrink-0">
+                    {item.badge}
+                  </span>
+                )}
+              </NavLink>
+            );
+          })}
         </div>
 
-        {navItems.map((item) => {
-          const Icon = item.icon;
-          return (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              className={({ isActive }) =>
-                `flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-mono font-medium transition-all group ${
-                  isActive
-                    ? "bg-white/[0.08] text-emerald-300 border border-emerald-500/30 shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
-                }`
-              }
-            >
-              <div className="flex items-center gap-2.5 truncate">
-                <Icon className="w-4 h-4 text-slate-400 group-hover:text-emerald-400 transition-colors shrink-0" />
-                <span className="truncate">{item.label}</span>
-              </div>
-              {item.badge && (
-                <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.06] text-slate-400 shrink-0">
-                  {item.badge}
-                </span>
-              )}
-            </NavLink>
-          );
-        })}
+        {/* Section 2: Workspace & Tools */}
+        <div className="space-y-1 pt-2 border-t border-white/[0.06]">
+          <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500 px-2.5 py-1 font-bold">
+            Workspace & Tools
+          </div>
+          {toolsNavItems.map((item) => {
+            const Icon = item.icon;
+            return (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                className={({ isActive }) =>
+                  `flex items-center justify-between px-2.5 py-2 rounded-lg text-xs font-mono font-medium transition-all group ${
+                    isActive
+                      ? "bg-white/[0.08] text-emerald-300 border border-emerald-500/30 shadow-sm"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
+                  }`
+                }
+              >
+                <div className="flex items-center gap-2.5 truncate">
+                  <Icon className="w-4 h-4 text-slate-400 group-hover:text-emerald-400 transition-colors shrink-0" />
+                  <span className="truncate">{item.label}</span>
+                </div>
+                {item.badge && (
+                  <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.04] border border-white/[0.06] text-slate-400 shrink-0">
+                    {item.badge}
+                  </span>
+                )}
+              </NavLink>
+            );
+          })}
+        </div>
       </nav>
 
       {/* 4. Cohesive Bottom Footer: Clean Path & Synced Port & Refresh Controls */}

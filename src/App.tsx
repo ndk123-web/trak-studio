@@ -12,6 +12,7 @@ import { ManifestPage } from "./pages/ManifestPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { DocsPage } from "./pages/DocsPage";
 import { EmptyWorkspace } from "./components/EmptyWorkspace";
+import { WorkspacesHub } from "./components/WorkspacesHub";
 import type { FileNode, StatusModel, WorkspaceInfo } from "./types";
 import { fetchFileTree, fetchStatus, fetchWorkspace, toggleModuleDone, setWorkspacePath } from "./api";
 
@@ -20,6 +21,12 @@ export function App() {
   const [status, setStatus] = useState<StatusModel | null>(null);
   const [tree, setTree] = useState<FileNode[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const hasModules = Boolean(
+    workspace?.hasTrakJson &&
+    status &&
+    Object.keys(status.module_breakdown || {}).length > 0
+  );
 
   // Resizable & Collapsible sidebar state with persistence
   const [sidebarWidth, setSidebarWidth] = useState<number>(() => {
@@ -161,13 +168,14 @@ export function App() {
               </div>
             ) : (
               <Routes>
-                <Route path="/" element={<Navigate to="/dashboard" replace />} />
+                <Route path="/" element={<Navigate to={hasModules ? "/dashboard" : "/workspaces"} replace />} />
                 <Route
                   path="/dashboard"
                   element={
-                    !workspace?.hasTrakJson || !status ? (
-                      <EmptyWorkspace
+                    !hasModules || !status ? (
+                      <WorkspacesHub
                         workspace={workspace}
+                        status={status}
                         onWorkspacePathChange={handleWorkspacePathChange}
                         isLoading={loading || isSwitchingWorkspace}
                       />
@@ -180,11 +188,23 @@ export function App() {
                   }
                 />
                 <Route
+                  path="/workspaces"
+                  element={
+                    <WorkspacesHub
+                      workspace={workspace}
+                      status={status}
+                      onWorkspacePathChange={handleWorkspacePathChange}
+                      isLoading={loading || isSwitchingWorkspace}
+                    />
+                  }
+                />
+                <Route
                   path="/modules"
                   element={
-                    !workspace?.hasTrakJson || !status ? (
+                    !hasModules || !status ? (
                       <EmptyWorkspace
                         workspace={workspace}
+                        status={status}
                         onWorkspacePathChange={handleWorkspacePathChange}
                         isLoading={loading || isSwitchingWorkspace}
                       />
@@ -199,9 +219,10 @@ export function App() {
                 <Route
                   path="/modules/:moduleId"
                   element={
-                    !workspace?.hasTrakJson || !status ? (
+                    !hasModules || !status ? (
                       <EmptyWorkspace
                         workspace={workspace}
+                        status={status}
                         onWorkspacePathChange={handleWorkspacePathChange}
                         isLoading={loading || isSwitchingWorkspace}
                       />
@@ -220,9 +241,10 @@ export function App() {
                 <Route
                   path="/verify"
                   element={
-                    !workspace?.hasTrakJson || !status ? (
+                    !hasModules || !status ? (
                       <EmptyWorkspace
                         workspace={workspace}
+                        status={status}
                         onWorkspacePathChange={handleWorkspacePathChange}
                         isLoading={loading || isSwitchingWorkspace}
                       />
@@ -237,9 +259,10 @@ export function App() {
                 <Route
                   path="/manifest"
                   element={
-                    !workspace?.hasTrakJson || !status ? (
+                    !hasModules || !status ? (
                       <EmptyWorkspace
                         workspace={workspace}
+                        status={status}
                         onWorkspacePathChange={handleWorkspacePathChange}
                         isLoading={loading || isSwitchingWorkspace}
                       />
