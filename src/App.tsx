@@ -12,7 +12,7 @@ import { ManifestPage } from "./pages/ManifestPage";
 import { SettingsPage } from "./pages/SettingsPage";
 import { EmptyWorkspace } from "./components/EmptyWorkspace";
 import type { FileNode, StatusModel, WorkspaceInfo } from "./types";
-import { fetchFileTree, fetchStatus, fetchWorkspace, toggleModuleDone } from "./api";
+import { fetchFileTree, fetchStatus, fetchWorkspace, toggleModuleDone, setWorkspacePath } from "./api";
 
 export function App() {
   const [workspace, setWorkspace] = useState<WorkspaceInfo | null>(null);
@@ -94,20 +94,50 @@ export function App() {
     await toggleModuleDone(moduleName, done);
   };
 
-  const handleWorkspacePathChange = (newPath: string) => {
-    setWorkspace((prev) => (prev ? { ...prev, cwd: newPath } : { cwd: newPath, hasTrakJson: true }));
-    loadData();
+  const [isSwitchingWorkspace, setIsSwitchingWorkspace] = useState(false);
+
+  const handleWorkspacePathChange = async (newPath: string): Promise<{ success: boolean; error?: string }> => {
+    setIsSwitchingWorkspace(true);
+    setLoading(true);
+    try {
+      const res = await setWorkspacePath(newPath);
+      if (!res.success) {
+        return res;
+      }
+      await loadData();
+      return { success: true };
+    } catch (err) {
+      return { success: false, error: String(err) };
+    } finally {
+      setIsSwitchingWorkspace(false);
+      setLoading(false);
+    }
   };
 
   return (
     <HashRouter>
-      <div className="flex h-screen w-screen overflow-hidden bg-[#07090e] text-[#f1f5f9] antialiased">
+      <div className="flex h-screen w-screen overflow-hidden bg-[#07090e] text-[#f1f5f9] antialiased relative">
+        {/* Workspace Switching Loading Overlay */}
+        {isSwitchingWorkspace && (
+          <div className="fixed inset-0 z-50 bg-[#07090e]/80 backdrop-blur-sm flex flex-col items-center justify-center gap-3 animate-in fade-in duration-150">
+            <div className="w-10 h-10 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+            <div className="text-center space-y-1">
+              <div className="text-xs font-mono font-bold text-emerald-400 tracking-wider uppercase">
+                Switching Workspace
+              </div>
+              <div className="text-[11px] font-mono text-slate-400">
+                Re-indexing workspace tree and curriculum status...
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Resizable & Collapsible Left Studio Sidebar */}
         <Sidebar
           status={status}
           workspace={workspace}
           onRefresh={loadData}
-          isLoading={loading}
+          isLoading={loading || isSwitchingWorkspace}
           width={sidebarWidth}
           onWidthChange={handleWidthChange}
           isCollapsed={isSidebarCollapsed}

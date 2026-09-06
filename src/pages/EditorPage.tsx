@@ -25,8 +25,24 @@ import {
   X,
 } from "lucide-react";
 import type { FileNode } from "../types";
-import { fetchFileContent } from "../api";
+import {
+  fetchFileContent,
+  saveFileContent,
+  createWorkspaceItem,
+  deleteWorkspaceItem,
+} from "../api";
 import { useNavigate } from "react-router-dom";
+
+function findFirstFile(nodes: FileNode[]): string | null {
+  for (const node of nodes) {
+    if (!node.isDir) return node.path;
+    if (node.children && node.children.length > 0) {
+      const found = findFirstFile(node.children);
+      if (found) return found;
+    }
+  }
+  return null;
+}
 
 interface EditorPageProps {
   tree: FileNode[];
@@ -35,7 +51,9 @@ interface EditorPageProps {
 export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => {
   const navigate = useNavigate();
   const [tree, setTree] = useState<FileNode[]>(initialTree);
-  const [selectedFile, setSelectedFile] = useState<string>("00-setup-and-prerequisites/README.md");
+  const [selectedFile, setSelectedFile] = useState<string>(() => {
+    return findFirstFile(initialTree) || "README.md";
+  });
   const [code, setCode] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
   const [copied, setCopied] = useState<boolean>(false);
@@ -141,6 +159,20 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
 
   useEffect(() => {
     setTree(initialTree);
+    if (initialTree.length > 0) {
+      const first = findFirstFile(initialTree);
+      if (first && (!selectedFile || selectedFile.startsWith("00-setup-and-prerequisites"))) {
+        setSelectedFile(first);
+      }
+      // Expand top-level folders automatically
+      const autoExpand: Record<string, boolean> = {};
+      initialTree.forEach((node) => {
+        if (node.isDir) {
+          autoExpand[node.path] = true;
+        }
+      });
+      setExpandedFolders((prev) => ({ ...autoExpand, ...prev }));
+    }
   }, [initialTree]);
 
   useEffect(() => {
@@ -170,9 +202,13 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [code, selectedFile]);
 
-  const handleSave = () => {
-    setSaved(true);
-    setTimeout(() => setSaved(false), 2000);
+  const handleSave = async () => {
+    if (!selectedFile) return;
+    const ok = await saveFileContent(selectedFile, code);
+    if (ok) {
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    }
   };
 
   const toggleFolder = (path: string) => {
@@ -185,12 +221,15 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleCreateItem = (e: React.FormEvent) => {
+  const handleCreateItem = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newItemName.trim()) return;
 
     const trimmed = newItemName.trim();
     const fullPath = selectedFolderForNew ? `${selectedFolderForNew}/${trimmed}` : trimmed;
+    const isDir = newDialog === "folder";
+
+    await createWorkspaceItem(fullPath, isDir);
 
     if (newDialog === "file") {
       const newFileNode: FileNode = {
@@ -216,11 +255,13 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree }) => 
 
     setNewItemName("");
     setNewDialog(null);
+    setSelectedFolderForNew("");
   };
 
-  const handleDeleteItem = (path: string, e: React.MouseEvent) => {
+  const handleDeleteItem = async (path: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (confirm(`Are you sure you want to delete '${path}'?`)) {
+      await deleteWorkspaceItem(path);
       setTree((prev) => prev.filter((item) => item.path !== path));
       if (selectedFile === path) {
         setSelectedFile("README.md");

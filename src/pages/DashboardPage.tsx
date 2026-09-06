@@ -1,7 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import {
   Layers,
-  Sparkles,
   PlayCircle,
   CheckCircle2,
   Circle,
@@ -69,51 +68,57 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 
       {/* 3 Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Card 1: Blueprint Specification */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4 relative overflow-hidden">
+        {/* Card 1: Track Metadata */}
+        <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 space-y-4">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-semibold flex items-center gap-1.5">
-              <Layers className="w-4 h-4" />
-              Blueprint Provenance
+            <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
+              <Layers className="w-4 h-4 text-emerald-400" />
+              Track Specification
             </span>
-            <span className="text-xs font-mono text-slate-400 px-2 py-0.5 rounded bg-white/[0.04]">
-              {status.version}
+            <span className="text-xs font-mono text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
+              v{status.version || "1.0.0"}
             </span>
           </div>
 
           <div>
-            <div className="text-lg font-serif text-[#f5f4ef]">{status.id}</div>
+            <div className="text-base font-mono font-bold text-[#f5f4ef]">{status.id}</div>
             <div className="text-xs font-mono text-slate-400 mt-1 truncate">
               Source: {status.source}
             </div>
           </div>
 
           <div className="pt-2 border-t border-white/[0.06] text-xs font-mono text-slate-400 space-y-1">
-            <div>Author: {status.author}</div>
-            <div>Template Version: {status.template_version}</div>
+            <div className="flex justify-between">
+              <span>Author:</span>
+              <span className="text-slate-200">{status.author || "Trak"}</span>
+            </div>
+            <div className="flex justify-between">
+              <span>Template:</span>
+              <span className="text-slate-200">{status.template_version || "1.0.0"}</span>
+            </div>
           </div>
         </div>
 
         {/* Card 2: Progress & Completion Gauge */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4">
+        <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 space-y-4">
           <div className="flex items-center justify-between">
             <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">
-              Curriculum Mastery
+              Curriculum Progress
             </span>
             <span className="text-xs font-mono font-bold text-emerald-400">
-              {completedCount} / {totalCount} Passed
+              {completedCount} / {totalCount} Modules
             </span>
           </div>
 
           <div className="flex items-baseline gap-2">
-            <span className="font-serif text-4xl text-[#f5f4ef] tracking-tight">
+            <span className="font-mono text-3xl font-bold text-[#f5f4ef] tracking-tight">
               {progressPercent}%
             </span>
-            <span className="text-xs font-mono text-slate-400">overall completion</span>
+            <span className="text-xs font-mono text-slate-400">completed</span>
           </div>
 
           <div className="space-y-1.5">
-            <div className="w-full h-2.5 rounded-full bg-white/[0.08] overflow-hidden">
+            <div className="w-full h-2 rounded-full bg-white/[0.08] overflow-hidden">
               <div
                 className="h-full bg-emerald-400 rounded-full transition-all duration-500"
                 style={{ width: `${progressPercent}%` }}
@@ -121,18 +126,18 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
             </div>
             <div className="flex justify-between text-[10px] font-mono text-slate-500">
               <span>0%</span>
-              <span>Target 100%</span>
+              <span>100% Target</span>
             </div>
           </div>
         </div>
 
-        {/* Card 3: Active Module Next Step */}
-        <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4 flex flex-col justify-between">
+        {/* Card 3: Active Lab Next Step */}
+        <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 space-y-4 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2">
               <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                <Sparkles className="w-4 h-4 text-emerald-400" />
-                Current Active Lab
+                <PlayCircle className="w-4 h-4 text-emerald-400" />
+                Active Exercise
               </span>
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">
                 In Progress
@@ -150,7 +155,7 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
               </div>
             ) : (
               <div>
-                <h3 className="font-serif text-base text-emerald-400">Track 100% Completed!</h3>
+                <h3 className="font-mono text-base text-emerald-400 font-bold">Track Completed</h3>
                 <p className="text-xs text-slate-400 mt-1 font-sans">
                   All assertions and exercises have passed successfully.
                 </p>

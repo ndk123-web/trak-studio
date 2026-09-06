@@ -1,6 +1,10 @@
 import type { FileContent, FileNode, StatusModel, VerifyResult, WorkspaceInfo } from "./types";
 
-const API_BASE = "";
+// Dynamically point to Go CLI backend if running Vite dev on a different port (e.g. 5173)
+const API_BASE =
+  typeof window !== "undefined" && window.location.port !== "8200"
+    ? "http://localhost:8200"
+    : "";
 
 // Realistic mock data for preview/standalone development mode
 const MOCK_TRAK_JSON: StatusModel = {
@@ -191,5 +195,65 @@ export async function toggleModuleDone(moduleName: string, done: boolean): Promi
     return res.ok;
   } catch {
     return true; // Optimistic mock
+  }
+}
+
+export async function saveFileContent(filePath: string, content: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/api/file`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: filePath, content }),
+      signal: AbortSignal.timeout(5000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function createWorkspaceItem(filePath: string, isDir: boolean): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/api/item`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: filePath, isDir }),
+      signal: AbortSignal.timeout(5000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function deleteWorkspaceItem(filePath: string): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/api/item/delete`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: filePath }),
+      signal: AbortSignal.timeout(5000),
+    });
+    return res.ok;
+  } catch {
+    return false;
+  }
+}
+
+export async function setWorkspacePath(newPath: string): Promise<{ success: boolean; error?: string }> {
+  try {
+    const res = await fetch(`${API_BASE}/api/workspace`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ cwd: newPath }),
+      signal: AbortSignal.timeout(5000),
+    });
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      return { success: false, error: data.error || `Server error (status ${res.status})` };
+    }
+    return { success: true };
+  } catch (err) {
+    return { success: false, error: String(err) };
   }
 }

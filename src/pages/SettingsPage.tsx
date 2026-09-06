@@ -13,8 +13,8 @@ import {
   ArrowRight,
   Clock,
   Trash2,
-  Sparkles,
   Radio,
+  AlertCircle,
 } from "lucide-react";
 import type { StatusModel, WorkspaceInfo } from "../types";
 
@@ -23,7 +23,7 @@ interface SettingsPageProps {
   status: StatusModel | null;
   onRefresh: () => void;
   isLoading: boolean;
-  onWorkspacePathChange?: (newPath: string) => void;
+  onWorkspacePathChange?: (newPath: string) => Promise<{ success: boolean; error?: string } | void> | void;
 }
 
 export const SettingsPage: React.FC<SettingsPageProps> = ({
@@ -34,6 +34,8 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   onWorkspacePathChange,
 }) => {
   const [customPath, setCustomPath] = useState(workspace?.cwd || "");
+  const [isSwitching, setIsSwitching] = useState(false);
+  const [errorNotice, setErrorNotice] = useState<string | null>(null);
   const [recentPaths, setRecentPaths] = useState<string[]>(() => {
     const saved = localStorage.getItem("trak_studio_recent_workspaces");
     if (saved) {
@@ -65,21 +67,36 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     }
   }, [workspace?.cwd]);
 
-  const handleSwitchWorkspace = (targetPath: string) => {
-    if (!targetPath.trim()) return;
+  const handleSwitchWorkspace = async (targetPath: string) => {
+    if (!targetPath.trim() || isSwitching) return;
     const pathTrimmed = targetPath.trim();
+    setIsSwitching(true);
+    setErrorNotice(null);
+    setSavedNotice(null);
 
-    // Update recents
-    const updated = [pathTrimmed, ...recentPaths.filter((p) => p !== pathTrimmed)].slice(0, 5);
-    setRecentPaths(updated);
-    localStorage.setItem("trak_studio_recent_workspaces", JSON.stringify(updated));
+    try {
+      if (onWorkspacePathChange) {
+        const res = await onWorkspacePathChange(pathTrimmed);
+        if (res && typeof res === "object" && "success" in res && !res.success) {
+          setErrorNotice(res.error || `Failed to switch workspace to: ${pathTrimmed}`);
+          setTimeout(() => setErrorNotice(null), 5000);
+          return;
+        }
+      }
 
-    if (onWorkspacePathChange) {
-      onWorkspacePathChange(pathTrimmed);
+      // Update recents
+      const updated = [pathTrimmed, ...recentPaths.filter((p) => p !== pathTrimmed)].slice(0, 5);
+      setRecentPaths(updated);
+      localStorage.setItem("trak_studio_recent_workspaces", JSON.stringify(updated));
+
+      setSavedNotice(`Switched active workspace to: ${pathTrimmed}`);
+      setTimeout(() => setSavedNotice(null), 3500);
+    } catch (err) {
+      setErrorNotice(String(err));
+      setTimeout(() => setErrorNotice(null), 5000);
+    } finally {
+      setIsSwitching(false);
     }
-
-    setSavedNotice(`Switched active workspace to: ${pathTrimmed}`);
-    setTimeout(() => setSavedNotice(null), 3500);
   };
 
   const handleRemoveRecent = (pathToRemove: string, e: React.MouseEvent) => {
@@ -122,6 +139,13 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
             <span>{savedNotice}</span>
           </div>
         )}
+
+        {errorNotice && (
+          <div className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-xs font-mono animate-in fade-in">
+            <AlertCircle className="w-4 h-4 shrink-0" />
+            <span>{errorNotice}</span>
+          </div>
+        )}
       </div>
 
       <form onSubmit={handleSavePreferences} className="space-y-6">
@@ -147,18 +171,29 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
               <input
                 type="text"
                 value={customPath}
+                disabled={isSwitching || isLoading}
                 onChange={(e) => setCustomPath(e.target.value)}
-                placeholder="e.g. D:/CLI/trak/workspaces/learn-go"
-                className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#07090e] border border-white/[0.08] text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500/50"
+                placeholder="e.g. C:\Users\Navnath\OneDrive\Desktop\Fun\trak-test"
+                className="w-full pl-9 pr-3 py-2.5 rounded-lg bg-[#07090e] border border-white/[0.08] text-xs font-mono text-slate-200 focus:outline-none focus:border-emerald-500/50 disabled:opacity-60"
               />
             </div>
             <button
               type="button"
+              disabled={isSwitching || isLoading}
               onClick={() => handleSwitchWorkspace(customPath)}
-              className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs font-mono transition-colors shrink-0 flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.15)]"
+              className="w-full sm:w-auto px-5 py-2.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-zinc-950 font-bold text-xs font-mono transition-colors shrink-0 flex items-center justify-center gap-1.5 shadow-[0_0_12px_rgba(16,185,129,0.15)] cursor-pointer"
             >
-              <span>Switch Workspace</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              {isSwitching || isLoading ? (
+                <>
+                  <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                  <span>Switching Workspace...</span>
+                </>
+              ) : (
+                <>
+                  <span>Switch Workspace</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </>
+              )}
             </button>
           </div>
 
@@ -303,7 +338,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2 text-xs font-mono uppercase tracking-wider text-slate-300 font-semibold">
-              <Sparkles className="w-4 h-4 text-emerald-400" />
+              <Sliders className="w-4 h-4 text-emerald-400" />
               <span>Future Integrations & Automation Hooks</span>
             </div>
             <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-white/[0.04] text-slate-400 border border-white/[0.06]">
