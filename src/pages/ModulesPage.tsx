@@ -44,7 +44,7 @@ export const ModulesPage: React.FC<ModulesPageProps> = ({
             <Layers className="w-4 h-4" />
             Curriculum Modules Roadmap
           </div>
-          <h1 className="font-serif text-2xl sm:text-3xl text-[#f5f4ef]">
+          <h1 className="text-xl sm:text-2xl font-mono font-bold text-white tracking-tight">
             {status.name}
           </h1>
           <p className="text-xs text-slate-400 font-sans mt-1">

@@ -19,6 +19,9 @@ import {
 import type { StatusModel, WorkspaceInfo } from "../types";
 import { useTheme } from "../context/ThemeContext";
 
+import { fetchWorkspacesHistory, deleteWorkspaceHistoryItem } from "../api";
+import type { WorkspaceHistoryItem } from "../components/WorkspacesHub";
+
 interface SettingsPageProps {
   workspace: WorkspaceInfo | null;
   status: StatusModel | null;
@@ -38,20 +41,20 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
   const [customPath, setCustomPath] = useState(workspace?.cwd || "");
   const [isSwitching, setIsSwitching] = useState(false);
   const [errorNotice, setErrorNotice] = useState<string | null>(null);
-  const [recentPaths, setRecentPaths] = useState<string[]>(() => {
-    const saved = localStorage.getItem("trak_studio_recent_workspaces");
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {
-        // fallback
-      }
+  const [recentItems, setRecentItems] = useState<WorkspaceHistoryItem[]>([]);
+
+  const loadHistory = async () => {
+    try {
+      const items = await fetchWorkspacesHistory();
+      setRecentItems(items);
+    } catch {
+      // fallback
     }
-    return [
-      workspace?.cwd || "d:/CLI/trak/workspaces/learn-go",
-      "d:/CLI/trak - learning tool/trak-studio",
-    ];
-  });
+  };
+
+  useEffect(() => {
+    loadHistory();
+  }, [workspace?.cwd]);
 
   const port = window.location.port || "8200";
   const [autoVerify, setAutoVerify] = useState<boolean>(() => {
@@ -103,11 +106,7 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
         }
       }
 
-      // Update recents
-      const updated = [pathTrimmed, ...recentPaths.filter((p) => p !== pathTrimmed)].slice(0, 5);
-      setRecentPaths(updated);
-      localStorage.setItem("trak_studio_recent_workspaces", JSON.stringify(updated));
-
+      await loadHistory();
       setSavedNotice(`Switched active workspace to: ${pathTrimmed}`);
       setTimeout(() => setSavedNotice(null), 3500);
     } catch (err) {
@@ -118,11 +117,14 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
     }
   };
 
-  const handleRemoveRecent = (pathToRemove: string, e: React.MouseEvent) => {
+  const handleRemoveRecent = async (pathToRemove: string, e: React.MouseEvent) => {
     e.stopPropagation();
-    const updated = recentPaths.filter((p) => p !== pathToRemove);
-    setRecentPaths(updated);
-    localStorage.setItem("trak_studio_recent_workspaces", JSON.stringify(updated));
+    try {
+      const updated = await deleteWorkspaceHistoryItem(pathToRemove);
+      setRecentItems(updated);
+    } catch {
+      setRecentItems((prev) => prev.filter((item) => item.path !== pathToRemove));
+    }
   };
 
   const handleSavePreferences = (e: React.FormEvent) => {
@@ -215,46 +217,53 @@ export const SettingsPage: React.FC<SettingsPageProps> = ({
           </div>
 
           {/* Recent Workspaces List */}
-          {recentPaths.length > 0 && (
+          {recentItems.length > 0 && (
             <div className="pt-2 space-y-2">
               <div className="text-[11px] font-mono text-slate-500 uppercase flex items-center gap-1.5">
                 <Clock className="w-3 h-3" />
                 <span>Recent Workspaces</span>
               </div>
               <div className="space-y-1.5">
-                {recentPaths.map((path) => (
-                  <div
-                    key={path}
-                    onClick={() => {
-                      setCustomPath(path);
-                      handleSwitchWorkspace(path);
-                    }}
-                    className={`flex items-center justify-between p-2.5 rounded-lg text-xs font-mono cursor-pointer border transition-all ${
-                      path === workspace?.cwd
-                        ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                        : "bg-[#07090e] border-white/[0.04] text-slate-400 hover:text-slate-200 hover:border-white/[0.08]"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 truncate">
-                      <FolderOpen className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                      <span className="truncate">{path}</span>
-                      {path === workspace?.cwd && (
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-semibold shrink-0">
-                          Active
-                        </span>
-                      )}
-                    </div>
-
-                    <button
-                      type="button"
-                      onClick={(e) => handleRemoveRecent(path, e)}
-                      className="p-1 rounded hover:bg-white/[0.08] text-slate-500 hover:text-red-400 transition-colors shrink-0"
-                      title="Remove from recents"
+                {recentItems.map((item) => {
+                  const isActive = item.path.toLowerCase() === workspace?.cwd?.toLowerCase();
+                  return (
+                    <div
+                      key={item.path}
+                      onClick={() => {
+                        setCustomPath(item.path);
+                        handleSwitchWorkspace(item.path);
+                      }}
+                      className={`flex items-center justify-between p-2.5 rounded-lg text-xs font-mono cursor-pointer border transition-all ${
+                        isActive
+                          ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                          : "bg-[#07090e] border-white/[0.04] text-slate-400 hover:text-slate-200 hover:border-white/[0.08]"
+                      }`}
                     >
-                      <Trash2 className="w-3.5 h-3.5" />
-                    </button>
-                  </div>
-                ))}
+                      <div className="flex items-center gap-2 truncate">
+                        <FolderOpen className="w-3.5 h-3.5 text-slate-500 shrink-0" />
+                        <span className="truncate font-semibold text-slate-200">{item.name}</span>
+                        <span className="text-[11px] text-slate-500 truncate hidden sm:inline">({item.path})</span>
+                        {isActive && (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 font-semibold shrink-0">
+                            Active
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 shrink-0 ml-2">
+                        <span className="text-[10px] text-slate-500 hidden md:inline">{item.lastOpened}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => handleRemoveRecent(item.path, e)}
+                          className="p-1 rounded hover:bg-white/[0.08] text-slate-500 hover:text-red-400 transition-colors shrink-0"
+                          title="Remove from history"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

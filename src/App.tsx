@@ -168,17 +168,21 @@ export function App() {
               </div>
             ) : (
               <Routes>
-                <Route path="/" element={<Navigate to={hasModules ? "/dashboard" : "/workspaces"} replace />} />
+                <Route
+                  path="/"
+                  element={
+                    hasModules ? (
+                      <Navigate to="/dashboard" replace />
+                    ) : (
+                      <Navigate to="/workspaces" replace />
+                    )
+                  }
+                />
                 <Route
                   path="/dashboard"
                   element={
-                    !hasModules || !status ? (
-                      <WorkspacesHub
-                        workspace={workspace}
-                        status={status}
-                        onWorkspacePathChange={handleWorkspacePathChange}
-                        isLoading={loading || isSwitchingWorkspace}
-                      />
+                    !hasModules ? (
+                      <Navigate to="/workspaces" replace />
                     ) : (
                       <DashboardPage
                         status={status}

@@ -1,16 +1,27 @@
+import React, { useState, useMemo, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import {
-  Layers,
   PlayCircle,
   CheckCircle2,
-  Circle,
+  Clock,
+  RotateCcw,
+  Check,
+  FolderOpen,
+  Terminal,
+  Search,
   ArrowRight,
-  Code2,
+  RefreshCw,
+  ChevronDown,
+  ChevronUp,
+  AlertTriangle,
+  FastForward,
+  Square,
 } from "lucide-react";
-import type { StatusModel } from "../types";
+import type { StatusModel, VerifyResult } from "../types";
+import { runVerify } from "../api";
 
 interface DashboardPageProps {
-  status: StatusModel;
+  status: StatusModel | null;
   onToggleDone: (moduleName: string, done: boolean) => void;
 }
 
@@ -20,239 +31,603 @@ export const DashboardPage: React.FC<DashboardPageProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const modules = Object.entries(status.module_breakdown || {}).sort(([a], [b]) =>
-    a.localeCompare(b, undefined, { numeric: true })
-  );
+  // State
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterState, setFilterState] = useState<"all" | "pending" | "done" | "failed">("all");
+  const [isVerifying, setIsVerifying] = useState(false);
+  const [activeConsoleModule, setActiveConsoleModule] = useState<string>("");
+  const [consoleResult, setConsoleResult] = useState<VerifyResult | null>(null);
+  const [failedModules, setFailedModules] = useState<Record<string, string>>({});
+  const [lastVerifiedMap, setLastVerifiedMap] = useState<Record<string, { passed: boolean; durationMs: number; time: string }>>({});
+  const [showConsole, setShowConsole] = useState(false);
 
-  const totalCount = modules.length;
-  const completedCount = modules.filter(([_, done]) => done).length;
-  const progressPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
-  const nextModule = modules.find(([_, done]) => !done)?.[0] || null;
+  // Batch Run All State
+  const [isRunningAll, setIsRunningAll] = useState(false);
+  const [runAllProgress, setRunAllProgress] = useState<{ current: number; total: number; module: string }>({
+    current: 0,
+    total: 0,
+    module: "",
+  });
+  const stopRequested = useRef(false);
+
+  // Parse modules from status
+  const modules = useMemo(() => {
+    if (!status?.module_breakdown) return [];
+    return Object.entries(status.module_breakdown).sort(([a], [b]) =>
+      a.localeCompare(b, undefined, { numeric: true })
+    );
+  }, [status?.module_breakdown]);
+
+  const totalModules = modules.length;
+  const completedModules = modules.filter(([, done]) => done);
+  const completedCount = completedModules.length;
+  const pendingCount = totalModules - completedCount;
+  const failedCount = Object.keys(failedModules).length;
+  const progressPercent = totalModules > 0 ? Math.round((completedCount / totalModules) * 100) : 0;
+
+  const nextModule = useMemo(() => {
+    return modules.find(([name, done]) => !done && !failedModules[name])?.[0]
+      || modules.find(([_, done]) => !done)?.[0]
+      || null;
+  }, [modules, failedModules]);
+
+  const lastCompletedModule = useMemo(() => {
+    const rev = [...completedModules].reverse();
+    return rev[0]?.[0] || null;
+  }, [completedModules]);
+
+  useEffect(() => {
+    if (!activeConsoleModule && nextModule) {
+      setActiveConsoleModule(nextModule);
+    }
+  }, [nextModule, activeConsoleModule]);
+
+  // Verify a single module
+  const handleRunVerification = async (moduleName: string) => {
+    if (!moduleName || isVerifying) return;
+    setIsVerifying(true);
+    setActiveConsoleModule(moduleName);
+    setShowConsole(true);
+
+    try {
+      const res = await runVerify(moduleName);
+      setConsoleResult(res);
+
+      setLastVerifiedMap((prev) => ({
+        ...prev,
+        [moduleName]: {
+          passed: res.passed,
+          durationMs: res.durationMs,
+          time: new Date().toLocaleTimeString(),
+        },
+      }));
+
+      if (res.passed) {
+        setFailedModules((prev) => {
+          const next = { ...prev };
+          delete next[moduleName];
+          return next;
+        });
+        if (!status?.module_breakdown?.[moduleName]) {
+          onToggleDone(moduleName, true);
+        }
+      } else {
+        setFailedModules((prev) => ({
+          ...prev,
+          [moduleName]: res.output || "Test failed",
+        }));
+      }
+    } catch (err) {
+      const errStr = String(err);
+      setConsoleResult({
+        module: moduleName,
+        passed: false,
+        output: `Error: ${errStr}`,
+        durationMs: 0,
+        timestamp: new Date().toLocaleTimeString(),
+      });
+      setFailedModules((prev) => ({
+        ...prev,
+        [moduleName]: errStr,
+      }));
+    } finally {
+      setIsVerifying(false);
+    }
+  };
+
+  // Run All
+  const handleRunAll = async () => {
+    if (isRunningAll || isVerifying || modules.length === 0) return;
+    setIsRunningAll(true);
+    stopRequested.current = false;
+    setShowConsole(true);
+
+    for (let i = 0; i < modules.length; i++) {
+      if (stopRequested.current) break;
+      const [mod] = modules[i];
+      setRunAllProgress({ current: i + 1, total: modules.length, module: mod });
+      setActiveConsoleModule(mod);
+
+      try {
+        const res = await runVerify(mod);
+        setConsoleResult(res);
+        setLastVerifiedMap((prev) => ({
+          ...prev,
+          [mod]: {
+            passed: res.passed,
+            durationMs: res.durationMs,
+            time: new Date().toLocaleTimeString(),
+          },
+        }));
+
+        if (res.passed) {
+          setFailedModules((prev) => {
+            const next = { ...prev };
+            delete next[mod];
+            return next;
+          });
+          if (!status?.module_breakdown?.[mod]) {
+            onToggleDone(mod, true);
+          }
+        } else {
+          setFailedModules((prev) => ({
+            ...prev,
+            [mod]: res.output || "Test failed",
+          }));
+        }
+      } catch (err) {
+        setFailedModules((prev) => ({
+          ...prev,
+          [mod]: String(err),
+        }));
+      }
+    }
+    setIsRunningAll(false);
+  };
+
+  const handleStopRunAll = () => {
+    stopRequested.current = true;
+  };
+
+  // Mark Done / Undo
+  const handleMarkDone = (moduleName: string) => {
+    onToggleDone(moduleName, true);
+    setFailedModules((prev) => {
+      const next = { ...prev };
+      delete next[moduleName];
+      return next;
+    });
+  };
+
+  const handleUndo = () => {
+    if (!lastCompletedModule) return;
+    onToggleDone(lastCompletedModule, false);
+  };
+
+  // Filtered modules
+  const filteredModules = useMemo(() => {
+    return modules.filter(([name, done]) => {
+      const isFailed = Boolean(failedModules[name]);
+      if (filterState === "pending" && (done || isFailed)) return false;
+      if (filterState === "done" && !done) return false;
+      if (filterState === "failed" && !isFailed) return false;
+      if (searchQuery.trim()) {
+        return name.toLowerCase().includes(searchQuery.toLowerCase());
+      }
+      return true;
+    });
+  }, [modules, filterState, searchQuery, failedModules]);
 
   return (
-    <div className="p-6 sm:p-8 max-w-7xl mx-auto space-y-8">
-      {/* Hero Welcome Banner */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b border-white/[0.08]">
-        <div>
-          <div className="flex items-center gap-2 mb-1.5 text-xs font-mono text-slate-400 font-medium">
-            <span className="text-emerald-400 font-semibold">Trak</span>
-            <span className="text-slate-600">/</span>
-            <span className="text-slate-300">Workspace Dashboard</span>
-          </div>
-          <h1 className="font-serif text-2xl sm:text-3xl text-[#f5f4ef] tracking-tight">
-            {status.name}
+    <div className="p-4 sm:p-6 max-w-7xl mx-auto space-y-4 font-mono text-slate-200">
+      {/* Header: Track name + Actions */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-base font-bold text-white truncate">
+            {status?.name || status?.id || "Workspace"}
           </h1>
-          <p className="text-xs sm:text-sm text-slate-400 font-sans mt-1">
-            Local-first developer learning environment running directly on your machine.
-          </p>
+          <div className="text-[11px] text-slate-400">
+            {completedCount}/{totalModules} completed ({progressPercent}%)
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          <button
-            onClick={() => navigate("/editor")}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/[0.08] text-xs font-mono font-medium transition-colors"
-          >
-            <Code2 className="w-4 h-4 text-slate-400" />
-            <span>Open Monaco Studio</span>
-          </button>
+        <div className="flex flex-wrap items-center gap-2 shrink-0">
           {nextModule && (
             <button
-              onClick={() => navigate("/verify")}
-              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-mono font-bold transition-colors shadow-[0_0_15px_rgba(16,185,129,0.2)]"
+              onClick={() => handleRunVerification(nextModule)}
+              disabled={isVerifying || isRunningAll}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-zinc-950 text-xs font-bold transition-colors cursor-pointer"
             >
-              <PlayCircle className="w-4 h-4" />
-              <span>Verify Next Module</span>
+              <PlayCircle className={`w-3.5 h-3.5 ${isVerifying ? "animate-spin" : ""}`} />
+              <span>{isVerifying ? "Verifying..." : "Verify"}</span>
+            </button>
+          )}
+
+          {isRunningAll ? (
+            <button
+              onClick={handleStopRunAll}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-red-500 hover:bg-red-400 text-white text-xs font-bold transition-colors cursor-pointer"
+            >
+              <Square className="w-3 h-3 fill-current" />
+              <span>Stop</span>
+            </button>
+          ) : (
+            <button
+              onClick={handleRunAll}
+              disabled={isVerifying || totalModules === 0}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/[0.08] text-xs font-bold transition-colors disabled:opacity-50 cursor-pointer"
+            >
+              <FastForward className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Run All</span>
+            </button>
+          )}
+
+          {nextModule && (
+            <button
+              onClick={() => handleMarkDone(nextModule)}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-slate-200 text-xs transition-colors cursor-pointer"
+            >
+              <Check className="w-3.5 h-3.5 text-emerald-400" />
+              <span>Done</span>
+            </button>
+          )}
+
+          {lastCompletedModule && (
+            <button
+              onClick={handleUndo}
+              title={`Undo: ${lastCompletedModule}`}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-slate-300 hover:text-amber-300 text-xs transition-colors cursor-pointer"
+            >
+              <RotateCcw className="w-3.5 h-3.5 text-amber-400" />
+              <span>Undo</span>
             </button>
           )}
         </div>
       </div>
 
-      {/* Mock Data Banner (Shown only when running on simulated/fallback data) */}
-      {status.isMock && (
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-xl bg-amber-500/[0.08] border border-amber-500/25 text-xs font-mono text-amber-300">
-          <div className="flex items-center gap-2.5 min-w-0">
-            <span className="w-2 h-2 rounded-full bg-amber-400 shrink-0" />
-            <span className="font-bold uppercase tracking-wider text-[10px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-200 shrink-0">
-              Mock Preview Mode
+      {/* Batch Progress */}
+      {isRunningAll && (
+        <div className="bg-[#090b10] border border-emerald-500/30 rounded-lg p-3 space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="flex items-center gap-1.5 text-emerald-400 font-medium">
+              <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+              {runAllProgress.module}
             </span>
-            <span className="text-amber-200/90 truncate">
-              Currently displaying simulated demo data. Run <code className="text-amber-100 font-bold bg-black/30 px-1 py-0.5 rounded">trak studio</code> in an initialized workspace for live disk state.
+            <span className="text-slate-400">
+              {runAllProgress.current}/{runAllProgress.total}
             </span>
           </div>
-          <button
-            onClick={() => navigate("/settings")}
-            className="text-[11px] text-amber-300 hover:text-white underline underline-offset-2 shrink-0 transition-colors self-start sm:self-auto"
-          >
-            Change Workspace
-          </button>
+          <div className="w-full h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
+            <div
+              className="h-full bg-emerald-500 rounded-full transition-all duration-200"
+              style={{ width: `${(runAllProgress.current / runAllProgress.total) * 100}%` }}
+            />
+          </div>
         </div>
       )}
 
-      {/* 3 Metric Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Card 1: Track Metadata */}
-        <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-              <Layers className="w-4 h-4 text-emerald-400" />
-              Track Specification
-            </span>
-            <span className="text-xs font-mono text-emerald-400 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/20">
-              v{status.version || "1.0.0"}
-            </span>
-          </div>
-
-          <div>
-            <div className="text-base font-mono font-bold text-[#f5f4ef]">{status.id}</div>
-            <div className="text-xs font-mono text-slate-400 mt-1 truncate">
-              Source: {status.source}
-            </div>
-          </div>
-
-          <div className="pt-2 border-t border-white/[0.06] text-xs font-mono text-slate-400 space-y-1">
-            <div className="flex justify-between">
-              <span>Author:</span>
-              <span className="text-slate-200">{status.author || "Trak"}</span>
-            </div>
-            <div className="flex justify-between">
-              <span>Template:</span>
-              <span className="text-slate-200">{status.template_version || "1.0.0"}</span>
-            </div>
-          </div>
+      {/* Metrics Row */}
+      <div className="grid grid-cols-4 gap-3">
+        <div className="bg-[#090b10] border border-white/[0.08] rounded-lg p-3">
+          <div className="text-[10px] text-slate-500 uppercase tracking-wider">Total</div>
+          <div className="text-xl font-bold text-white">{totalModules}</div>
         </div>
-
-        {/* Card 2: Progress & Completion Gauge */}
-        <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 space-y-4">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">
-              Curriculum Progress
-            </span>
-            <span className="text-xs font-mono font-bold text-emerald-400">
-              {completedCount} / {totalCount} Modules
-            </span>
+        <div className="bg-[#090b10] border border-white/[0.08] rounded-lg p-3">
+          <div className="text-[10px] text-emerald-400 uppercase tracking-wider flex items-center gap-1">
+            <CheckCircle2 className="w-3 h-3" /> Passed
           </div>
-
-          <div className="flex items-baseline gap-2">
-            <span className="font-mono text-3xl font-bold text-[#f5f4ef] tracking-tight">
-              {progressPercent}%
-            </span>
-            <span className="text-xs font-mono text-slate-400">completed</span>
-          </div>
-
-          <div className="space-y-1.5">
-            <div className="w-full h-2 rounded-full bg-white/[0.08] overflow-hidden">
-              <div
-                className="h-full bg-emerald-400 rounded-full transition-all duration-500"
-                style={{ width: `${progressPercent}%` }}
-              />
-            </div>
-            <div className="flex justify-between text-[10px] font-mono text-slate-500">
-              <span>0%</span>
-              <span>100% Target</span>
-            </div>
-          </div>
+          <div className="text-xl font-bold text-emerald-400">{completedCount}</div>
         </div>
-
-        {/* Card 3: Active Lab Next Step */}
-        <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 space-y-4 flex flex-col justify-between">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
-                <PlayCircle className="w-4 h-4 text-emerald-400" />
-                Active Exercise
-              </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20 font-semibold">
-                In Progress
-              </span>
-            </div>
-
-            {nextModule ? (
-              <div>
-                <h3 className="font-mono text-sm font-semibold text-[#f5f4ef] break-all">
-                  {nextModule}
-                </h3>
-                <p className="text-xs text-slate-400 mt-1 font-sans">
-                  Ready to test with native compilers and unit test suites.
-                </p>
-              </div>
-            ) : (
-              <div>
-                <h3 className="font-mono text-base text-emerald-400 font-bold">Track Completed</h3>
-                <p className="text-xs text-slate-400 mt-1 font-sans">
-                  All assertions and exercises have passed successfully.
-                </p>
-              </div>
-            )}
+        <div className="bg-[#090b10] border border-white/[0.08] rounded-lg p-3">
+          <div className="text-[10px] text-amber-400 uppercase tracking-wider flex items-center gap-1">
+            <Clock className="w-3 h-3" /> Pending
           </div>
-
-          {nextModule && (
-            <div className="flex items-center gap-2 pt-2">
-              <button
-                onClick={() => navigate(`/modules/${encodeURIComponent(nextModule)}`)}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/[0.08] text-xs font-mono transition-colors"
-              >
-                <span>Inspect Module</span>
-                <ArrowRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-          )}
+          <div className="text-xl font-bold text-amber-300">{pendingCount}</div>
+        </div>
+        <div className="bg-[#090b10] border border-white/[0.08] rounded-lg p-3">
+          <div className="text-[10px] text-slate-400 uppercase tracking-wider">Progress</div>
+          <div className="text-xl font-bold text-white">{progressPercent}%</div>
+          <div className="w-full h-1 rounded-full bg-white/[0.08] overflow-hidden mt-1">
+            <div
+              className="h-full bg-emerald-500 rounded-full transition-all duration-300"
+              style={{ width: `${progressPercent}%` }}
+            />
+          </div>
         </div>
       </div>
 
-      {/* Quick Launch & Recent Modules List */}
-      <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4">
-        <div className="flex items-center justify-between pb-3 border-b border-white/[0.06]">
-          <div>
-            <h2 className="font-serif text-lg text-[#f5f4ef]">Modules Overview</h2>
-            <p className="text-xs text-slate-400 font-sans mt-0.5">
-              Top learning steps in this blueprint. Click to jump to full curriculum.
-            </p>
+      {/* No Modules Alert */}
+      {totalModules === 0 && (
+        <div className="bg-[#090b10] border border-amber-500/30 rounded-lg p-4">
+          <div className="flex items-center gap-2 text-xs">
+            <FolderOpen className="w-4 h-4 text-amber-400 shrink-0" />
+            <span className="text-slate-300">No modules found in this workspace.</span>
+            <button
+              onClick={() => navigate("/workspaces")}
+              className="ml-auto flex items-center gap-1 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-bold rounded-lg transition-colors cursor-pointer"
+            >
+              <span>Switch</span>
+              <ArrowRight className="w-3 h-3" />
+            </button>
           </div>
-          <button
-            onClick={() => navigate("/modules")}
-            className="flex items-center gap-1 text-xs font-mono text-emerald-400 hover:text-emerald-300 transition-colors"
-          >
-            <span>View All {totalCount} Modules</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
+        </div>
+      )}
+
+      {/* Console Dock */}
+      {showConsole && (
+        <div className="terminal-window bg-[#090b10] border border-white/[0.08] rounded-lg overflow-hidden">
+          <div className="terminal-header px-3 py-2 bg-[#0c0f17] border-b border-white/[0.08] flex items-center justify-between text-xs">
+            <div className="flex items-center gap-2">
+              <Terminal className="w-3.5 h-3.5 text-emerald-400" />
+              <span className="text-slate-300 truncate max-w-sm">
+                {activeConsoleModule || "Terminal"}
+              </span>
+              {consoleResult && (
+                <span
+                  className={`text-[10px] px-1.5 py-0.5 rounded font-bold uppercase ${
+                    consoleResult.passed
+                      ? "bg-emerald-500/20 text-emerald-300"
+                      : "bg-red-500/20 text-red-300"
+                  }`}
+                >
+                  {consoleResult.passed ? "PASS" : "FAIL"}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5">
+              {activeConsoleModule && (
+                <button
+                  onClick={() => handleRunVerification(activeConsoleModule)}
+                  disabled={isVerifying}
+                  className="flex items-center gap-1 px-2 py-1 rounded bg-white/[0.04] hover:bg-white/[0.08] text-xs text-slate-300 transition-colors disabled:opacity-50 cursor-pointer"
+                >
+                  <RefreshCw className={`w-3 h-3 ${isVerifying ? "animate-spin text-emerald-400" : ""}`} />
+                  <span>Re-run</span>
+                </button>
+              )}
+              <button
+                onClick={() => setShowConsole(false)}
+                className="p-1 hover:bg-white/[0.08] rounded text-slate-400 hover:text-white transition-colors cursor-pointer"
+              >
+                <ChevronUp className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          <div className="terminal-body p-3 bg-[#0b0f19] text-xs max-h-56 overflow-y-auto">
+            {isVerifying ? (
+              <div className="flex items-center gap-2 text-slate-400 py-3">
+                <RefreshCw className="w-3.5 h-3.5 animate-spin text-emerald-400" />
+                <span>Running tests...</span>
+              </div>
+            ) : consoleResult ? (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-[11px] text-slate-500 border-b border-white/[0.06] pb-1">
+                  <span>{consoleResult.module}</span>
+                  <span>{consoleResult.durationMs}ms</span>
+                </div>
+                <pre className="text-slate-200 whitespace-pre-wrap leading-relaxed select-text font-mono text-[11px]">
+                  {consoleResult.output}
+                </pre>
+              </div>
+            ) : (
+              <div className="text-slate-500 py-3 text-center">
+                Click Verify to run tests.
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Module Table */}
+      <div className="bg-[#090b10] border border-white/[0.08] rounded-lg overflow-hidden">
+        {/* Toolbar */}
+        <div className="px-3 py-2.5 bg-[#0c0f17] border-b border-white/[0.08] flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-xs text-white">Modules</span>
+            <span className="text-[11px] text-slate-500">({filteredModules.length})</span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {/* Console Toggle */}
+            <button
+              onClick={() => setShowConsole((prev) => !prev)}
+              className="flex items-center gap-1 px-2 py-1 rounded bg-white/[0.04] hover:bg-white/[0.08] text-xs text-slate-400 hover:text-white transition-colors cursor-pointer"
+            >
+              <Terminal className="w-3 h-3 text-emerald-400" />
+              {showConsole ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
+            </button>
+
+            {/* Search */}
+            <div className="relative">
+              <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search..."
+                className="pl-7 pr-3 py-1 bg-[#050608] border border-white/[0.08] rounded text-xs text-white placeholder-slate-500 focus:outline-none focus:border-emerald-500/40 w-36"
+              />
+            </div>
+
+            {/* Filters */}
+            <div className="flex items-center bg-[#050608] border border-white/[0.08] rounded p-0.5 text-[11px]">
+              <button
+                onClick={() => setFilterState("all")}
+                className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                  filterState === "all" ? "bg-white/[0.1] text-white font-bold" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setFilterState("pending")}
+                className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                  filterState === "pending" ? "bg-amber-500/20 text-amber-300 font-bold" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Pending
+              </button>
+              <button
+                onClick={() => setFilterState("done")}
+                className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                  filterState === "done" ? "bg-emerald-500/20 text-emerald-300 font-bold" : "text-slate-400 hover:text-white"
+                }`}
+              >
+                Done
+              </button>
+              {failedCount > 0 && (
+                <button
+                  onClick={() => setFilterState("failed")}
+                  className={`px-2 py-0.5 rounded transition-colors cursor-pointer ${
+                    filterState === "failed" ? "bg-red-500/20 text-red-300 font-bold" : "text-red-400 hover:text-red-300"
+                  }`}
+                >
+                  Failed
+                </button>
+              )}
+            </div>
+          </div>
         </div>
 
-        <div className="space-y-2">
-          {modules.slice(0, 6).map(([moduleName, isDone], i) => (
-            <div
-              key={moduleName}
-              className="flex items-center justify-between p-3 rounded-xl border border-white/[0.04] bg-white/[0.01] hover:bg-white/[0.03] transition-colors"
-            >
-              <div className="flex items-center gap-3">
-                <button
-                  onClick={() => onToggleDone(moduleName, !isDone)}
-                  className="text-slate-500 hover:text-emerald-400 transition-colors"
-                  title={isDone ? "Mark Incomplete" : "Mark Done"}
-                >
-                  {isDone ? (
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                  ) : (
-                    <Circle className="w-5 h-5 text-slate-600" />
-                  )}
-                </button>
-                <div>
-                  <div className="font-mono text-xs font-semibold text-slate-200">
-                    <span className="text-slate-500 mr-2">0{i + 1}</span>
-                    {moduleName}
-                  </div>
-                </div>
-              </div>
+        {/* Table */}
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-xs">
+            <thead className="bg-[#0c0f17] border-b border-white/[0.06] text-slate-500 uppercase text-[10px] tracking-wider">
+              <tr>
+                <th className="py-2 px-3 w-10 text-center">S</th>
+                <th className="py-2 px-2 w-10">#</th>
+                <th className="py-2 px-3">Module</th>
+                <th className="py-2 px-3 w-24">State</th>
+                <th className="py-2 px-3 w-28 hidden sm:table-cell">Result</th>
+                <th className="py-2 px-3 w-32 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-white/[0.04]">
+              {filteredModules.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="py-8 text-center text-slate-500">
+                    No modules match filter.
+                  </td>
+                </tr>
+              ) : (
+                filteredModules.map(([name, done], index) => {
+                  const isFailed = Boolean(failedModules[name]);
+                  const isCurrentNext = name === nextModule;
+                  const lastRun = lastVerifiedMap[name];
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => navigate(`/modules/${encodeURIComponent(moduleName)}`)}
-                  className="px-2.5 py-1 rounded bg-white/[0.03] hover:bg-white/[0.06] text-xs font-mono text-slate-300 border border-white/[0.06] transition-colors"
-                >
-                  Details
-                </button>
-              </div>
-            </div>
-          ))}
+                  return (
+                    <tr
+                      key={name}
+                      className={`hover:bg-white/[0.02] transition-colors ${
+                        isCurrentNext ? "bg-emerald-500/[0.03]" : ""
+                      }`}
+                    >
+                      {/* Status */}
+                      <td className="py-2.5 px-3 text-center">
+                        {isFailed ? (
+                          <span className="w-2.5 h-2.5 rounded-full bg-red-500 inline-block" title="Failed" />
+                        ) : done ? (
+                          <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 inline-block" title="Passed" />
+                        ) : isCurrentNext ? (
+                          <span className="w-2.5 h-2.5 rounded-full bg-amber-400 inline-block animate-pulse" title="Next" />
+                        ) : (
+                          <span className="w-2.5 h-2.5 rounded-full bg-slate-600 inline-block" title="Pending" />
+                        )}
+                      </td>
+
+                      {/* Index */}
+                      <td className="py-2.5 px-2 text-slate-500">
+                        {String(index + 1).padStart(2, "0")}
+                      </td>
+
+                      {/* Name */}
+                      <td className="py-2.5 px-3 text-slate-200">
+                        <span
+                          onClick={() => handleRunVerification(name)}
+                          className="hover:text-emerald-400 cursor-pointer"
+                          title="Click to verify"
+                        >
+                          {name}
+                        </span>
+                        {isCurrentNext && (
+                          <span className="ml-2 text-[9px] px-1 py-0.5 rounded bg-emerald-500/15 text-emerald-400 font-bold">
+                            NEXT
+                          </span>
+                        )}
+                      </td>
+
+                      {/* State */}
+                      <td className="py-2.5 px-3">
+                        {isFailed ? (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300 font-bold">Failed</span>
+                        ) : done ? (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-300 font-bold">Passed</span>
+                        ) : (
+                          <span className="text-[10px] px-1.5 py-0.5 rounded bg-white/[0.04] text-slate-400">Pending</span>
+                        )}
+                      </td>
+
+                      {/* Last Result */}
+                      <td className="py-2.5 px-3 text-slate-400 hidden sm:table-cell">
+                        {lastRun ? (
+                          <span className={lastRun.passed ? "text-emerald-400" : "text-red-400"}>
+                            {lastRun.passed ? "PASS" : "FAIL"} {lastRun.durationMs}ms
+                          </span>
+                        ) : (
+                          <span className="text-slate-600">—</span>
+                        )}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-2.5 px-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleRunVerification(name)}
+                            title="Verify"
+                            className="p-1 rounded hover:bg-emerald-500/20 text-slate-400 hover:text-emerald-300 transition-colors cursor-pointer"
+                          >
+                            <PlayCircle className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              const newDone = !done;
+                              onToggleDone(name, newDone);
+                              if (newDone) {
+                                setFailedModules((prev) => {
+                                  const next = { ...prev };
+                                  delete next[name];
+                                  return next;
+                                });
+                              }
+                            }}
+                            title={done ? "Mark Incomplete" : "Mark Done"}
+                            className={`p-1 rounded transition-colors cursor-pointer ${
+                              done
+                                ? "bg-emerald-500/15 text-emerald-400 hover:bg-emerald-500/25"
+                                : "text-slate-500 hover:text-slate-300 hover:bg-white/[0.06]"
+                            }`}
+                          >
+                            <Check className="w-3.5 h-3.5" />
+                          </button>
+
+                          <button
+                            onClick={() => navigate(`/modules/${encodeURIComponent(name)}`)}
+                            title="Inspect"
+                            className="px-1.5 py-0.5 rounded text-[11px] text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+                          >
+                            Inspect
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
