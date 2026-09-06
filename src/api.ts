@@ -1,8 +1,9 @@
 import type { FileContent, FileNode, StatusModel, VerifyResult, WorkspaceInfo } from "./types";
 
-// Dynamically point to Go CLI backend if running Vite dev on a different port (e.g. 5173)
+// In production (embedded in Go binary), always use relative path "" so ANY port (--port 3000, -p 8200, etc.) works with real data!
+// Only during local Vite development (npm run dev on port 5173), route to the Go backend on port 8200.
 const API_BASE =
-  typeof window !== "undefined" && window.location.port !== "8200"
+  import.meta.env.DEV && typeof window !== "undefined" && window.location.port === "5173"
     ? "http://localhost:8200"
     : "";
 
