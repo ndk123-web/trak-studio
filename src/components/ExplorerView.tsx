@@ -2,9 +2,6 @@ import React, { useState, useEffect } from "react";
 import {
   Folder,
   FolderOpen,
-  FileCode,
-  FileText,
-  FileJson,
   ChevronRight,
   ChevronDown,
   Copy,
@@ -13,6 +10,7 @@ import {
 } from "lucide-react";
 import type { FileContent, FileNode } from "../types";
 import { fetchFileContent } from "../api";
+import { FileIcon } from "./FileIcon";
 
 interface ExplorerViewProps {
   tree: FileNode[];
@@ -69,9 +67,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
   };
 
   const getFileIcon = (fileName: string) => {
-    if (fileName.endsWith(".json")) return <FileJson className="w-3.5 h-3.5 text-amber-400" />;
-    if (fileName.endsWith(".md")) return <FileText className="w-3.5 h-3.5 text-emerald-400" />;
-    return <FileCode className="w-3.5 h-3.5 text-slate-300" />;
+    return <FileIcon filename={fileName} className="w-3.5 h-3.5" />;
   };
 
   const renderTree = (nodes: FileNode[], depth = 0) => {
@@ -87,7 +83,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
             <div key={node.path}>
               <button
                 onClick={() => toggleFolder(node.path)}
-                className="w-full flex items-center gap-1.5 py-1 px-2 rounded hover:bg-white/[0.04] text-xs font-mono text-slate-300 transition-colors text-left group"
+                className="w-full flex items-center gap-2 py-1 px-2 rounded-lg hover:bg-white/[0.04] text-xs font-mono text-slate-300 transition-colors text-left group"
                 style={{ paddingLeft: `${depth * 12 + 8}px` }}
               >
                 {isExpanded ? (
@@ -114,7 +110,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
           <button
             key={node.path}
             onClick={() => setSelectedFile(node.path)}
-            className={`w-full flex items-center gap-2 py-1 px-2 rounded text-xs font-mono transition-colors text-left truncate ${
+            className={`w-full flex items-center gap-2 py-1 px-2 rounded-lg text-xs font-mono transition-colors text-left truncate ${
               isSelected
                 ? "bg-emerald-500/10 text-emerald-300 border-l-2 border-emerald-400 font-medium"
                 : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
@@ -130,16 +126,16 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div className="rounded-xl border border-white/[0.08] bg-[#090b10] overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[600px] max-h-[750px]">
+      <div className="rounded-lg border border-white/[0.06] bg-[#161c2d] overflow-hidden grid grid-cols-1 md:grid-cols-12 min-h-[600px] max-h-[750px]">
         {/* Left Pane: Workspace File Tree */}
-        <div className="md:col-span-4 border-r border-white/[0.08] bg-[#07090e] flex flex-col">
+        <div className="md:col-span-4 border-r border-white/[0.06] bg-[#0e131f] flex flex-col">
           {/* Header & Filter */}
           <div className="p-3 border-b border-white/[0.06] space-y-2">
             <div className="flex items-center justify-between text-xs font-mono text-slate-400">
               <span className="uppercase tracking-wider font-semibold text-slate-300">
                 Workspace Tree
               </span>
-              <span className="text-[11px] text-slate-500">Local Files</span>
+              <span className="text-xs text-slate-500">Local Files</span>
             </div>
             <div className="relative">
               <Search className="w-3.5 h-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -148,7 +144,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
                 placeholder="Filter files..."
                 value={searchFilter}
                 onChange={(e) => setSearchFilter(e.target.value)}
-                className="w-full pl-8 pr-2 py-1 rounded bg-white/[0.03] border border-white/[0.06] text-xs font-mono text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/40"
+                className="w-full pl-8 pr-2 py-1 rounded-lg bg-white/[0.03] border border-white/[0.06] text-xs font-mono text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/40"
               />
             </div>
           </div>
@@ -160,7 +156,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
         </div>
 
         {/* Right Pane: Code Previewer */}
-        <div className="md:col-span-8 flex flex-col bg-[#090b10]">
+        <div className="md:col-span-8 flex flex-col bg-[#161c2d]">
           {/* File Header Bar */}
           <div className="p-3 border-b border-white/[0.06] flex items-center justify-between gap-4 bg-white/[0.01]">
             <div className="flex items-center gap-2 truncate">
@@ -169,7 +165,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
                 {selectedFile}
               </span>
               {fileData && (
-                <span className="text-[11px] font-mono text-slate-500 hidden sm:inline">
+                <span className="text-xs font-mono text-slate-500 hidden sm:inline">
                   ({fileData.size} bytes)
                 </span>
               )}
@@ -178,7 +174,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={handleCopy}
-                className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-slate-300 text-xs font-mono transition-colors"
+                className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-slate-300 text-xs font-mono transition-colors"
                 title="Copy File Content"
               >
                 {copied ? (
@@ -197,7 +193,7 @@ export const ExplorerView: React.FC<ExplorerViewProps> = ({
           </div>
 
           {/* Content Body */}
-          <div className="flex-1 overflow-y-auto p-4 font-mono text-xs text-slate-300 leading-relaxed bg-[#090b10]">
+          <div className="flex-1 overflow-y-auto p-4 font-mono text-xs text-slate-300 leading-relaxed bg-[#161c2d]">
             {loading ? (
               <div className="h-full flex items-center justify-center text-slate-500">
                 Loading file contents...

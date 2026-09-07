@@ -46,12 +46,12 @@ export const Header: React.FC<HeaderProps> = ({
   ];
 
   return (
-    <header className="sticky top-0 z-30 border-b border-white/[0.08] bg-[#07090e]/95 backdrop-blur-md">
+    <header className="sticky top-0 z-30 border-b border-white/[0.06] bg-[#0e131f]/95 backdrop-blur-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
         {/* Left: Brand Monogram & Live Status */}
         <div className="flex items-center gap-3 shrink-0">
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-mono font-bold text-sm shadow-[0_0_12px_rgba(16,185,129,0.15)]">
+            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-mono font-bold text-sm">
               tr
             </div>
             <div>
@@ -59,12 +59,12 @@ export const Header: React.FC<HeaderProps> = ({
                 <span className="font-serif text-base font-normal tracking-tight text-[#f5f4ef]">
                   Trak Studio
                 </span>
-                <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-white/[0.06] text-slate-300 border border-white/[0.08]">
+                <span className="text-xs font-mono font-bold px-2 py-0.5 rounded-lg bg-white/[0.06] text-slate-300 border border-white/[0.06]">
                   v1.0.0
                 </span>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] font-mono text-slate-400">
-                <span className="text-emerald-400">●</span>
+              <div className="flex items-center gap-2 text-xs font-mono text-slate-400">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
                 <span>Local Bridge Active</span>
               </div>
             </div>
@@ -79,9 +79,9 @@ export const Header: React.FC<HeaderProps> = ({
               <button
                 key={tab.id}
                 onClick={() => onTabChange(tab.id)}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-mono font-medium transition-all shrink-0 ${
+                className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono font-medium transition-all shrink-0 ${
                   isActive
-                    ? "bg-white/[0.1] text-emerald-300 border border-emerald-500/30 shadow-sm"
+                    ? "bg-white/[0.1] text-emerald-300 border border-emerald-500/30"
                     : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
                 }`}
               >
@@ -98,7 +98,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               onClick={handleCopyPath}
               title={`Click to copy path: ${workspace.cwd}`}
-              className="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] text-slate-300 text-xs font-mono transition-colors group max-w-xs truncate"
+              className="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] text-slate-300 text-xs font-mono transition-colors group max-w-xs truncate"
             >
               <Folder className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
               <span className="truncate max-w-[200px]">{workspace.cwd}</span>

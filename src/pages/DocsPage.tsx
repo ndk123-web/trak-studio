@@ -196,7 +196,7 @@ Examples:
   return (
     <div className="p-6 sm:p-8 max-w-6xl mx-auto space-y-8 select-none">
       {/* Hero Header */}
-      <div className="pb-6 border-b border-white/[0.08] space-y-3">
+      <div className="pb-6 border-b border-white/[0.06] space-y-3">
         <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 uppercase tracking-wider font-semibold">
           <BookOpen className="w-4 h-4" />
           <span>Trak Developer Manual & Command Reference</span>
@@ -221,14 +221,14 @@ Examples:
             return (
               <div
                 key={cat.id}
-                className="p-3.5 rounded-xl border border-white/[0.08] bg-[#090b10] hover:border-emerald-500/30 transition-all space-y-1.5"
+                className="p-4 rounded-lg border border-white/[0.06] bg-[#161c2d] hover:border-emerald-500/30 transition-all space-y-2"
               >
                 <div className="flex items-center gap-2">
                   <Icon className="w-4 h-4 text-emerald-400 shrink-0" />
                   <span className="font-mono text-xs font-bold text-[#f5f4ef]">{cat.id}</span>
                 </div>
                 <div className="text-xs text-slate-200 font-mono font-medium">{cat.name}</div>
-                <div className="text-[11px] text-slate-400 leading-tight">{cat.desc}</div>
+                <div className="text-xs text-slate-400 leading-tight">{cat.desc}</div>
               </div>
             );
           })}
@@ -236,7 +236,7 @@ Examples:
       </div>
 
       {/* Hero Quick Terminal Output */}
-      <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-5 sm:p-6 space-y-3">
+      <div className="rounded-lg border border-white/[0.06] bg-[#161c2d] p-5 sm:p-6 space-y-3">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-mono text-slate-300 font-semibold uppercase tracking-wider">
             <Terminal className="w-4 h-4 text-emerald-400" />
@@ -244,7 +244,7 @@ Examples:
           </div>
           <button
             onClick={() => handleCopy(heroCliText, "hero-cli")}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-xs font-mono text-slate-300 hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3 py-1 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-xs font-mono text-slate-300 hover:text-white transition-colors cursor-pointer"
           >
             {copiedId === "hero-cli" ? (
               <>
@@ -260,7 +260,7 @@ Examples:
           </button>
         </div>
 
-        <div className="rounded-xl bg-[#06080d] border border-white/[0.06] p-4 font-mono text-xs overflow-x-auto text-slate-200 leading-relaxed">
+        <div className="rounded-lg bg-[#0e131f] border border-white/[0.06] p-4 font-mono text-xs overflow-x-auto text-slate-200 leading-relaxed">
           <pre>{heroCliText}</pre>
         </div>
       </div>
@@ -274,10 +274,10 @@ Examples:
           </div>
 
           {/* Category Tabs */}
-          <div className="flex items-center gap-1 p-1 rounded-lg bg-[#090b10] border border-white/[0.08]">
+          <div className="flex items-center gap-1 p-1 rounded-lg bg-[#161c2d] border border-white/[0.06]">
             <button
               onClick={() => setActiveTab("all")}
-              className={`px-3 py-1 rounded-md text-xs font-mono transition-all ${
+              className={`px-3 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer ${
                 activeTab === "all"
                   ? "bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30"
                   : "text-slate-400 hover:text-slate-200"
@@ -287,7 +287,7 @@ Examples:
             </button>
             <button
               onClick={() => setActiveTab("core")}
-              className={`px-3 py-1 rounded-md text-xs font-mono transition-all ${
+              className={`px-3 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer ${
                 activeTab === "core"
                   ? "bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30"
                   : "text-slate-400 hover:text-slate-200"
@@ -297,7 +297,7 @@ Examples:
             </button>
             <button
               onClick={() => setActiveTab("progress")}
-              className={`px-3 py-1 rounded-md text-xs font-mono transition-all ${
+              className={`px-3 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer ${
                 activeTab === "progress"
                   ? "bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30"
                   : "text-slate-400 hover:text-slate-200"
@@ -307,7 +307,7 @@ Examples:
             </button>
             <button
               onClick={() => setActiveTab("utility")}
-              className={`px-3 py-1 rounded-md text-xs font-mono transition-all ${
+              className={`px-3 py-1 rounded-lg text-xs font-mono transition-all cursor-pointer ${
                 activeTab === "utility"
                   ? "bg-emerald-500/15 text-emerald-400 font-bold border border-emerald-500/30"
                   : "text-slate-400 hover:text-slate-200"
@@ -323,7 +323,7 @@ Examples:
           {filteredCommands.map((cmd) => (
             <div
               key={cmd.name}
-              className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-5 space-y-3 flex flex-col justify-between"
+              className="rounded-lg border border-white/[0.06] bg-[#161c2d] p-5 space-y-3 flex flex-col justify-between"
             >
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
@@ -331,13 +331,13 @@ Examples:
                     <span className="font-mono text-sm font-bold text-emerald-400">
                       trak {cmd.name}
                     </span>
-                    <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-white/[0.04] text-slate-400 border border-white/[0.06] uppercase">
+                    <span className="text-xs font-mono px-2 py-0.5 rounded-lg bg-white/[0.04] text-slate-400 border border-white/[0.06] uppercase">
                       {cmd.category}
                     </span>
                   </div>
                   <button
                     onClick={() => handleCopy(`trak ${cmd.name}`, `cmd-${cmd.name}`)}
-                    className="p-1 rounded hover:bg-white/[0.06] text-slate-400 hover:text-emerald-400 transition-colors"
+                    className="p-1 rounded-lg hover:bg-white/[0.06] text-slate-400 hover:text-emerald-400 transition-colors cursor-pointer"
                     title={`Copy trak ${cmd.name}`}
                   >
                     {copiedId === `cmd-${cmd.name}` ? (
@@ -354,10 +354,10 @@ Examples:
 
                 {/* Usage */}
                 <div className="pt-1">
-                  <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-1">
+                  <div className="text-xs font-mono uppercase tracking-wider text-slate-500 mb-1">
                     Usage
                   </div>
-                  <div className="p-2 rounded-lg bg-[#06080d] border border-white/[0.06] font-mono text-xs text-slate-200">
+                  <div className="p-2 rounded-lg bg-[#0e131f] border border-white/[0.06] font-mono text-xs text-slate-200">
                     {cmd.usage}
                   </div>
                 </div>
@@ -365,7 +365,7 @@ Examples:
                 {/* Examples */}
                 {cmd.examples.length > 0 && (
                   <div className="pt-1">
-                    <div className="text-[10px] font-mono uppercase tracking-wider text-slate-500 mb-1">
+                    <div className="text-xs font-mono uppercase tracking-wider text-slate-500 mb-1">
                       Examples
                     </div>
                     <div className="space-y-1">
@@ -373,10 +373,10 @@ Examples:
                         <div
                           key={idx}
                           onClick={() => handleCopy(ex, `ex-${cmd.name}-${idx}`)}
-                          className="group flex items-center justify-between p-1.5 px-2.5 rounded bg-[#06080d] hover:bg-white/[0.04] border border-white/[0.04] font-mono text-[11px] text-slate-300 cursor-pointer transition-colors"
+                          className="group flex items-center justify-between p-2 px-3 rounded-lg bg-[#0e131f] hover:bg-white/[0.04] border border-white/[0.04] font-mono text-xs text-slate-300 cursor-pointer transition-colors"
                         >
                           <span className="truncate">{ex}</span>
-                          <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[10px] text-emerald-400 shrink-0 ml-2">
+                          <span className="opacity-0 group-hover:opacity-100 transition-opacity text-xs text-emerald-400 shrink-0 ml-2">
                             {copiedId === `ex-${cmd.name}-${idx}` ? "Copied" : "Copy"}
                           </span>
                         </div>
@@ -388,7 +388,7 @@ Examples:
 
               {/* Flags */}
               {cmd.flags && cmd.flags.length > 0 && (
-                <div className="pt-2 border-t border-white/[0.04] text-[11px] font-mono text-slate-400 space-y-1">
+                <div className="pt-2 border-t border-white/[0.04] text-xs font-mono text-slate-400 space-y-1">
                   {cmd.flags.map((f, fIdx) => (
                     <div key={fIdx} className="flex items-center gap-2">
                       <span className="text-emerald-400/90 font-semibold">{f.flag}</span>
@@ -404,13 +404,13 @@ Examples:
       </div>
 
       {/* Global Flags Footer */}
-      <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
+      <div className="rounded-lg border border-white/[0.06] bg-[#161c2d] p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-3 text-xs font-mono">
         <div className="flex items-center gap-2 text-slate-300">
           <span className="text-emerald-400 font-bold">-h, --help</span>
           <span className="text-slate-500">—</span>
           <span>Help for trak or any subcommand</span>
         </div>
-        <div className="text-slate-400 text-[11px]">
+        <div className="text-slate-400 text-xs">
           Use <code className="text-slate-200">trak [command] --help</code> for more information about a command.
         </div>
       </div>

@@ -149,7 +149,7 @@ function AppShell() {
             <div className="text-xs font-mono font-bold text-emerald-400 tracking-wider uppercase">
               Switching Workspace
             </div>
-            <div className="text-[11px] font-mono text-slate-400">
+            <div className="text-xs font-mono text-slate-400">
               Re-indexing workspace tree and curriculum status...
             </div>
           </div>

@@ -1,12 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
 import Editor from "@monaco-editor/react";
 import { MarkdownViewer } from "../components/MarkdownViewer";
+import { FileIcon } from "../components/FileIcon";
 import {
   Folder,
   FolderOpen,
-  FileCode,
-  FileText,
-  FileJson,
   ChevronRight,
   ChevronDown,
   Copy,
@@ -341,9 +339,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
   };
 
   const getFileIcon = (fileName: string) => {
-    if (fileName.endsWith(".json")) return <FileJson className="w-3.5 h-3.5 text-amber-400" />;
-    if (fileName.endsWith(".md")) return <FileText className="w-3.5 h-3.5 text-emerald-400" />;
-    return <FileCode className="w-3.5 h-3.5 text-slate-300" />;
+    return <FileIcon filename={fileName} className="w-3.5 h-3.5" />;
   };
 
   const renderTree = (nodes: FileNode[], depth = 0) => {
@@ -359,10 +355,10 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
             <div key={node.path}>
               <div
                 onClick={() => toggleFolder(node.path)}
-                className="w-full flex items-center justify-between py-1 px-2 rounded hover:bg-white/[0.04] text-xs font-mono text-slate-300 transition-colors cursor-pointer group"
+                className="w-full flex items-center justify-between py-1 px-2 rounded-lg hover:bg-white/[0.04] text-xs font-mono text-slate-300 transition-colors cursor-pointer group"
                 style={{ paddingLeft: `${depth * 12 + 6}px` }}
               >
-                <div className="flex items-center gap-1.5 truncate">
+                <div className="flex items-center gap-2 truncate">
                   {isExpanded ? (
                     <ChevronDown className="w-3 h-3 text-slate-500 shrink-0" />
                   ) : (
@@ -384,7 +380,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
                       setItemError(null);
                       setNewDialog("file");
                     }}
-                    className="p-0.5 hover:text-white"
+                    className="p-1 rounded-lg hover:text-white cursor-pointer"
                     title="Add file inside this folder"
                   >
                     <FilePlus className="w-3 h-3 text-slate-400 hover:text-emerald-400" />
@@ -396,14 +392,14 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
                       setItemError(null);
                       setNewDialog("folder");
                     }}
-                    className="p-0.5 hover:text-white"
+                    className="p-1 rounded-lg hover:text-white cursor-pointer"
                     title="Add subfolder inside this folder"
                   >
                     <FolderPlus className="w-3 h-3 text-slate-400 hover:text-emerald-400" />
                   </button>
                   <button
                     onClick={(e) => handleDeleteItem(node.path, e)}
-                    className="p-0.5 text-slate-500 hover:text-red-400"
+                    className="p-1 rounded-lg text-slate-500 hover:text-red-400 cursor-pointer"
                     title="Delete folder"
                   >
                     <Trash2 className="w-3 h-3" />
@@ -422,7 +418,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
           <div
             key={node.path}
             onClick={() => setSelectedFile(node.path)}
-            className={`w-full flex items-center justify-between py-1 px-2 rounded text-xs font-mono transition-colors cursor-pointer group truncate ${
+            className={`w-full flex items-center justify-between py-1 px-2 rounded-lg text-xs font-mono transition-colors cursor-pointer group truncate ${
               isSelected
                 ? "bg-emerald-500/10 text-emerald-300 border-l-2 border-emerald-400 font-medium"
                 : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
@@ -436,7 +432,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
 
             <button
               onClick={(e) => handleDeleteItem(node.path, e)}
-              className="opacity-0 group-hover:opacity-100 p-0.5 text-slate-500 hover:text-red-400 transition-opacity shrink-0"
+              className="opacity-0 group-hover:opacity-100 p-1 rounded-lg text-slate-500 hover:text-red-400 transition-opacity shrink-0 cursor-pointer"
               title="Delete file"
             >
               <Trash2 className="w-3 h-3" />
@@ -449,12 +445,12 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
   return (
     <div className="h-[calc(100vh-3.5rem)] flex flex-col bg-[#07090e] overflow-hidden select-none">
       {/* 1. Top Editor Toolbar */}
-      <div className="h-11 border-b border-white/[0.08] bg-[#090b10] flex items-center justify-between px-3 gap-3">
+      <div className="h-11 border-b border-white/[0.06] bg-[#0e131f] flex items-center justify-between px-3 gap-3">
         <div className="flex items-center gap-2 min-w-0">
           <button
             onClick={() => setSidebarOpen(!sidebarOpen)}
             title={sidebarOpen ? "Collapse Files (Ctrl+B)" : "Expand Files (Ctrl+B)"}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/5 transition-colors cursor-pointer"
           >
             {sidebarOpen ? (
               <PanelLeftClose className="w-4 h-4 text-emerald-400" />
@@ -464,20 +460,20 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
           </button>
 
           {/* Active File Tab */}
-          <div className="flex items-center gap-2 px-3 py-1 rounded bg-[#07090e] border border-white/[0.08] text-xs font-mono text-slate-200 truncate">
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[#07090e] border border-white/[0.06] text-xs font-mono text-slate-200 truncate">
             {getFileIcon(selectedFile)}
             <span className="truncate max-w-[220px]">{selectedFile}</span>
-            <span className="text-[10px] font-mono text-emerald-400 px-1 py-0.2 rounded bg-emerald-500/10 uppercase">
+            <span className="text-xs font-mono text-emerald-400 px-2 py-0.5 rounded-lg bg-emerald-500/10 uppercase">
               {getLanguage(selectedFile)}
             </span>
           </div>
 
           {/* Markdown View Toggle (Code / Preview / Split) */}
           {isMarkdown && (
-            <div className="flex items-center p-0.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs font-mono">
+            <div className="flex items-center p-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs font-mono">
               <button
                 onClick={() => setViewMode("code")}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${
+                className={`flex items-center gap-2 px-3 py-1 rounded-lg transition-colors cursor-pointer ${
                   viewMode === "code"
                     ? "bg-white/[0.1] text-emerald-300 font-bold"
                     : "text-slate-400 hover:text-slate-200"
@@ -489,7 +485,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
               </button>
               <button
                 onClick={() => setViewMode("preview")}
-                className={`flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${
+                className={`flex items-center gap-2 px-3 py-1 rounded-lg transition-colors cursor-pointer ${
                   viewMode === "preview"
                     ? "bg-white/[0.1] text-emerald-300 font-bold"
                     : "text-slate-400 hover:text-slate-200"
@@ -501,7 +497,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
               </button>
               <button
                 onClick={() => setViewMode("split")}
-                className={`hidden md:flex items-center gap-1 px-2 py-0.5 rounded transition-colors ${
+                className={`hidden md:flex items-center gap-2 px-3 py-1 rounded-lg transition-colors cursor-pointer ${
                   viewMode === "split"
                     ? "bg-white/[0.1] text-emerald-300 font-bold"
                     : "text-slate-400 hover:text-slate-200"
@@ -521,14 +517,14 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
           <button
             onClick={handleSave}
             disabled={isSaving}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded text-xs font-mono border transition-colors cursor-pointer ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono border transition-colors cursor-pointer ${
               isSaving
                 ? "bg-emerald-500/15 text-emerald-300 border-emerald-500/30 cursor-wait"
                 : saved
                 ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/40"
                 : code !== lastSavedCode
                 ? "bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border-amber-500/30 font-medium"
-                : "bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border-white/[0.08]"
+                : "bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border-white/[0.06]"
             }`}
             title="Save Buffer (Ctrl+S)"
           >
@@ -564,7 +560,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
                 navigate("/verify");
               }
             }}
-            className="flex items-center gap-1.5 px-3 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-medium transition-colors cursor-pointer"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-medium transition-colors cursor-pointer"
             title={selectedFile && selectedFile.includes("/") ? `Verify assertions for module: ${selectedFile.split("/")[0]}` : "Run Verify Test"}
           >
             <PlayCircle className="w-3.5 h-3.5" />
@@ -575,7 +571,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
 
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-slate-300 text-xs font-mono transition-colors"
+            className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-slate-300 text-xs font-mono transition-colors cursor-pointer"
             title="Copy Buffer"
           >
             {copied ? (
@@ -593,12 +589,12 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
         {sidebarOpen && (
           <div
             style={{ width: `${sidebarWidth}px` }}
-            className="border-r border-white/[0.08] bg-[#07090e] flex flex-col shrink-0 relative transition-[width] duration-75 ease-out select-none"
+            className="border-r border-white/[0.06] bg-[#0e131f] flex flex-col shrink-0 relative transition-[width] duration-75 ease-out select-none"
           >
             {/* File Actions Header: + File, + Folder */}
             <div className="p-2 border-b border-white/[0.06] space-y-2">
               <div className="flex items-center justify-between text-xs font-mono text-slate-400">
-                <span className="font-semibold uppercase tracking-wider text-slate-300 text-[10px]">
+                <span className="font-semibold uppercase tracking-wider text-slate-300 text-xs">
                   Explorer
                 </span>
                 <div className="flex items-center gap-1">
@@ -607,7 +603,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
                       setSelectedFolderForNew("");
                       setNewDialog("file");
                     }}
-                    className="p-1 rounded hover:bg-white/[0.08] text-slate-400 hover:text-emerald-400 transition-colors"
+                    className="p-2 rounded-lg hover:bg-white/[0.08] text-slate-400 hover:text-emerald-400 transition-colors cursor-pointer"
                     title="New File"
                   >
                     <FilePlus className="w-3.5 h-3.5" />
@@ -617,7 +613,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
                       setSelectedFolderForNew("");
                       setNewDialog("folder");
                     }}
-                    className="p-1 rounded hover:bg-white/[0.08] text-slate-400 hover:text-emerald-400 transition-colors"
+                    className="p-2 rounded-lg hover:bg-white/[0.08] text-slate-400 hover:text-emerald-400 transition-colors cursor-pointer"
                     title="New Folder"
                   >
                     <FolderPlus className="w-3.5 h-3.5" />
@@ -627,19 +623,19 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
 
               {/* Inline Search */}
               <div className="relative">
-                <Search className="w-3 h-3 absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-500" />
+                <Search className="w-3 h-3 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
                 <input
                   type="text"
                   placeholder="Filter files..."
                   value={searchFilter}
                   onChange={(e) => setSearchFilter(e.target.value)}
-                  className="w-full pl-7 pr-2 py-1 rounded bg-white/[0.03] border border-white/[0.06] text-xs font-mono text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/40"
+                  className="w-full pl-8 pr-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06] text-xs font-mono text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/40"
                 />
               </div>
             </div>
 
             {/* Tree Items */}
-            <div className="flex-1 overflow-y-auto p-1.5 space-y-0.5">
+            <div className="flex-1 overflow-y-auto p-2 space-y-1">
               {renderTree(tree)}
             </div>
 
@@ -655,7 +651,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
         )}
 
         {/* Center / Right: Monaco Editor or Markdown Preview */}
-        <div className="flex-1 flex flex-col bg-[#090b10] min-w-0">
+        <div className="flex-1 flex flex-col bg-[#07090e] min-w-0">
           {loading ? (
             <div className="flex-1 flex flex-col items-center justify-center gap-3 bg-[#080a10]">
               <div className="w-8 h-8 rounded-full border-2 border-emerald-500/20 border-t-emerald-400 animate-spin" />
@@ -663,7 +659,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
                 <span className="font-mono text-xs text-slate-200 font-semibold">
                   {selectedFile ? selectedFile.split("/").pop() : "File"}
                 </span>
-                <span className="font-mono text-[11px] text-slate-500">
+                <span className="font-mono text-xs text-slate-500">
                   Loading buffer from workspace filesystem...
                 </span>
               </div>
@@ -734,7 +730,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
           )}
 
           {/* Monaco Bottom Status Bar */}
-          <div className="h-6 border-t border-white/[0.06] bg-[#07090e] px-4 flex items-center justify-between text-[11px] font-mono text-slate-400">
+          <div className="h-6 border-t border-white/[0.06] bg-[#07090e] px-4 flex items-center justify-between text-xs font-mono text-slate-400">
             <div className="flex items-center gap-3">
               <span>{selectedFile}</span>
               <span>•</span>
@@ -754,7 +750,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
       {/* New File / Folder Modal Dialog */}
       {newDialog && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 z-50 animate-in fade-in duration-150">
-          <div className="rounded-xl border border-white/[0.1] bg-[#090b10] p-5 w-full max-w-md space-y-4 shadow-2xl">
+          <div className="rounded-lg border border-white/[0.06] bg-[#161c2d] p-5 w-full max-w-md space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {newDialog === "file" ? (
@@ -771,14 +767,14 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
                   setNewDialog(null);
                   setItemError(null);
                 }}
-                className="text-slate-500 hover:text-white transition-colors"
+                className="text-slate-500 hover:text-white transition-colors cursor-pointer"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             {/* Target Location Preview & Switcher */}
-            <div className="p-2.5 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs font-mono">
+            <div className="p-3 rounded-lg bg-white/[0.03] border border-white/[0.06] flex items-center justify-between text-xs font-mono">
               <span className="text-slate-400">Target Location:</span>
               <div className="flex items-center gap-2">
                 <code className="text-emerald-400 font-bold truncate max-w-[200px]">
@@ -788,7 +784,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
                   <button
                     type="button"
                     onClick={() => setSelectedFolderForNew("")}
-                    className="text-[10px] text-slate-400 hover:text-amber-300 underline underline-offset-2"
+                    className="text-xs text-slate-400 hover:text-amber-300 underline underline-offset-2 cursor-pointer"
                     title="Change to Root directory"
                   >
                     Switch to Root
@@ -798,7 +794,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
             </div>
 
             {itemError && (
-              <div className="flex items-center gap-2 p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-xs font-mono">
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-red-300 text-xs font-mono">
                 <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
                 <span className="truncate">{itemError}</span>
               </div>
@@ -806,7 +802,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
 
             <form onSubmit={handleCreateItem} className="space-y-3">
               <div>
-                <label className="block text-[11px] font-mono text-slate-400 mb-1">
+                <label className="block text-xs font-mono text-slate-400 mb-1">
                   {newDialog === "file" ? "File Name (with extension)" : "Folder Name"}
                 </label>
                 <input
@@ -815,7 +811,7 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
                   placeholder={newDialog === "file" ? "e.g. main.go, notes.md, util.js" : "e.g. exercises, internal, tests"}
                   value={newItemName}
                   onChange={(e) => setNewItemName(e.target.value)}
-                  className="w-full px-3 py-2 rounded-lg bg-[#07090e] border border-white/[0.1] text-xs font-mono text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50"
+                  className="w-full px-3 py-2 rounded-lg bg-[#07090e] border border-white/[0.06] text-xs font-mono text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50"
                 />
               </div>
 
@@ -826,14 +822,14 @@ export const EditorPage: React.FC<EditorPageProps> = ({ tree: initialTree, onRef
                     setNewDialog(null);
                     setItemError(null);
                   }}
-                  className="px-3 py-1.5 rounded-lg bg-white/[0.04] text-slate-400 hover:text-white text-xs font-mono transition-colors"
+                  className="px-3 py-2 rounded-lg bg-white/[0.04] text-slate-400 hover:text-white text-xs font-mono transition-colors cursor-pointer"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={!newItemName.trim() || isSubmittingItem}
-                  className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs font-mono transition-colors disabled:opacity-50 cursor-pointer"
+                  className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs font-mono transition-colors disabled:opacity-50 cursor-pointer"
                 >
                   {isSubmittingItem ? (
                     <>

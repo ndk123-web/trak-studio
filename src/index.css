@@ -1,12 +1,19 @@
 @import "tailwindcss";
+@import "./styles/file-icons.css";
 
 @layer base {
   :root {
     --bg-primary: #07090e;
     --bg-surface: #0e131f;
     --bg-elevated: #161c2d;
+    --text-primary: #f1f5f9;
+    --text-secondary: #94a3b8;
+    --text-muted: #64748b;
+    --border-default: rgba(255, 255, 255, 0.06);
     --border-subtle: rgba(255, 255, 255, 0.08);
     --border-glow: rgba(16, 185, 129, 0.3);
+    --accent: #10b981;
+    --accent-hover: #34d399;
   }
 
   body {
@@ -42,6 +49,16 @@
 /* Light Mode Overrides */
 html.light {
   color-scheme: light;
+  --bg-primary: #f8fafc;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-default: #e2e8f0;
+  --border-subtle: #f1f5f9;
+  --accent: #059669;
+  --accent-hover: #047857;
 }
 
 html.light body {
@@ -77,6 +94,7 @@ html.light .bg-\[\#07080d\] {
   background-color: #f8fafc !important;
 }
 
+html.light .bg-\[\#161c2d\],
 html.light .bg-\[\#090b10\] {
   background-color: #ffffff !important;
   box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05);

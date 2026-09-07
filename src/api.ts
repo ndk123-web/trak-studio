@@ -89,12 +89,12 @@ export async function fetchWorkspace(): Promise<WorkspaceInfo> {
     // Return mock if API not running
   }
   return {
-    cwd: "d:/CLI/trak/workspaces/learn-go",
-    hasTrakJson: true,
-    activeTrack: "lang/go",
-    totalModules: 20,
-    completedModules: 2,
-    totalFiles: 42,
+    cwd: "",
+    hasTrakJson: false,
+    activeTrack: "",
+    totalModules: 0,
+    completedModules: 0,
+    totalFiles: 0,
     isMock: true,
   };
 }
@@ -186,7 +186,7 @@ export async function runVerify(moduleName: string): Promise<VerifyResult> {
   return {
     module: moduleName,
     passed: true,
-    output: `=== RUN   TestExerciseSolution\n--- PASS: TestExerciseSolution (0.00s)\nPASS\nok  \tlearn-go/${moduleName}\t0.042s`,
+    output: `=== RUN   TestExerciseSolution\n--- PASS: TestExerciseSolution (0.00s)\nPASS\nok  \t${moduleName}\t0.042s`,
     durationMs: 42,
     timestamp: new Date().toLocaleTimeString(),
   };
@@ -292,8 +292,11 @@ export async function fetchWorkspacesHistory(): Promise<WorkspaceHistoryItem[]> 
     if (res.ok) {
       const data = await res.json();
       if (Array.isArray(data)) {
-        localStorage.setItem("trak_workspaces_history", JSON.stringify(data));
-        return data;
+        const cleaned = data.filter(
+          (item) => !item.path?.includes("d:/CLI/trak/workspaces/learn-go") && !item.path?.toLowerCase().includes("learn-go")
+        );
+        localStorage.setItem("trak_workspaces_history", JSON.stringify(cleaned));
+        return cleaned;
       }
     }
   } catch {
@@ -303,7 +306,13 @@ export async function fetchWorkspacesHistory(): Promise<WorkspaceHistoryItem[]> 
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed)) return parsed;
+      if (Array.isArray(parsed)) {
+        const cleaned = parsed.filter(
+          (item) => !item.path?.includes("d:/CLI/trak/workspaces/learn-go") && !item.path?.toLowerCase().includes("learn-go")
+        );
+        localStorage.setItem("trak_workspaces_history", JSON.stringify(cleaned));
+        return cleaned;
+      }
     } catch {
       // ignore
     }

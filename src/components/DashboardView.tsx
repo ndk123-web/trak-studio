@@ -50,14 +50,13 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       {/* 1. Track Overview & Metric Cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Card 1: Track Identity */}
-        <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 space-y-3 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-500/5 rounded-full blur-2xl pointer-events-none" />
+        <div className="rounded-lg border border-white/[0.06] bg-[#161c2d] p-4 space-y-3 relative overflow-hidden">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-emerald-400 font-semibold flex items-center gap-1.5">
+            <span className="text-xs font-mono uppercase tracking-wider text-emerald-400 font-semibold flex items-center gap-2">
               <Layers className="w-3.5 h-3.5" />
               Active Blueprint
             </span>
-            <span className="text-xs font-mono text-slate-400 px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.06]">
+            <span className="text-xs font-mono text-slate-400 px-2 py-0.5 rounded-lg bg-white/[0.04] border border-white/[0.06]">
               {status.version}
             </span>
           </div>
@@ -77,9 +76,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Card 2: Progress Gauge */}
-        <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 space-y-3">
+        <div className="rounded-lg border border-white/[0.06] bg-[#161c2d] p-4 space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold">
+            <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold">
               Curriculum Mastery
             </span>
             <span className="text-xs font-mono text-emerald-400 font-bold">
@@ -95,14 +94,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
           </div>
 
           {/* Clean Progress Bar */}
-          <div className="space-y-1.5 pt-1">
+          <div className="space-y-2 pt-1">
             <div className="w-full h-2 rounded-full bg-white/[0.06] overflow-hidden">
               <div
                 className="h-full bg-emerald-400 transition-all duration-500 rounded-full"
                 style={{ width: `${progressPercent}%` }}
               />
             </div>
-            <div className="flex justify-between text-[11px] font-mono text-slate-500">
+            <div className="flex justify-between text-xs font-mono text-slate-500">
               <span>0%</span>
               <span>100% Target</span>
             </div>
@@ -110,14 +109,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
         </div>
 
         {/* Card 3: Next Action Target */}
-        <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 space-y-3 flex flex-col justify-between">
+        <div className="rounded-lg border border-white/[0.06] bg-[#161c2d] p-4 space-y-3 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-2">
-              <span className="text-[11px] font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-1.5">
+              <span className="text-xs font-mono uppercase tracking-wider text-slate-400 font-semibold flex items-center gap-2">
                 <Sparkles className="w-3.5 h-3.5 text-emerald-400" />
                 Current Active Lab
               </span>
-              <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
+              <span className="text-xs font-mono px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-300 border border-emerald-500/20">
                 Next Step
               </span>
             </div>
@@ -144,14 +143,14 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
             <div className="flex items-center gap-2 pt-2">
               <button
                 onClick={() => onRunVerify(nextModule)}
-                className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-semibold transition-colors"
+                className="flex-1 flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-xs font-mono font-semibold transition-colors"
               >
                 <PlayCircle className="w-3.5 h-3.5" />
                 <span>Verify Now</span>
               </button>
               <button
                 onClick={() => onSelectModule(nextModule)}
-                className="flex items-center justify-center gap-1 px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/[0.08] text-xs font-mono transition-colors"
+                className="flex items-center justify-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/[0.06] text-xs font-mono transition-colors"
                 title="Open Module Files"
               >
                 <FolderOpen className="w-3.5 h-3.5" />
@@ -163,7 +162,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
       </div>
 
       {/* 2. Modules Roadmap Section */}
-      <div className="rounded-xl border border-white/[0.08] bg-[#090b10] p-5 sm:p-6 space-y-6">
+      <div className="rounded-lg border border-white/[0.06] bg-[#161c2d] p-4 sm:p-6 space-y-6">
         {/* Section Header with Search & Filter Controls */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/[0.06]">
           <div>
@@ -182,7 +181,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 placeholder="Search modules..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-8 pr-3 py-1.5 rounded-lg bg-white/[0.03] border border-white/[0.08] text-slate-200 text-xs font-mono placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 w-44 sm:w-52"
+                className="pl-8 pr-3 py-2 rounded-lg bg-white/[0.03] border border-white/[0.06] text-slate-200 text-xs font-mono placeholder:text-slate-500 focus:outline-none focus:border-emerald-500/50 w-44 sm:w-52"
               />
             </div>
 
@@ -192,7 +191,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                 <button
                   key={f}
                   onClick={() => setFilter(f)}
-                  className={`px-2.5 py-1 rounded text-xs font-mono transition-colors capitalize ${
+                  className={`px-3 py-1 rounded-lg text-xs font-mono transition-colors capitalize ${
                     filter === f
                       ? "bg-white/[0.08] text-emerald-300 font-medium"
                       : "text-slate-400 hover:text-slate-200"
@@ -218,9 +217,9 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
               return (
                 <div
                   key={moduleName}
-                  className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 rounded-lg border transition-all ${
+                  className={`flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-4 py-3 rounded-lg border transition-all ${
                     isCurrent
-                      ? "border-emerald-500/30 bg-emerald-500/[0.03] shadow-sm"
+                      ? "border-emerald-500/30 bg-emerald-500/[0.03]"
                       : isDone
                       ? "border-white/[0.06] bg-white/[0.01] hover:bg-white/[0.03]"
                       : "border-white/[0.04] bg-transparent hover:bg-white/[0.02]"
@@ -254,12 +253,12 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                           {moduleName}
                         </span>
                         {isCurrent && (
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                          <span className="text-xs font-mono px-2 py-0.5 rounded-lg bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                             Current
                           </span>
                         )}
                         {isDone && (
-                          <span className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-white/[0.04] text-slate-400">
+                          <span className="text-xs font-mono px-2 py-0.5 rounded-lg bg-white/[0.04] text-slate-400">
                             Passed
                           </span>
                         )}
@@ -271,7 +270,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
                   <div className="flex items-center gap-2 self-end sm:self-auto shrink-0">
                     <button
                       onClick={() => onRunVerify(moduleName)}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-white/[0.03] hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/30 border border-white/[0.06] text-xs font-mono text-slate-300 transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] hover:bg-emerald-500/10 hover:text-emerald-300 hover:border-emerald-500/30 border border-white/[0.06] text-xs font-mono text-slate-300 transition-colors"
                       title="Run trak verify on this module"
                     >
                       <PlayCircle className="w-3.5 h-3.5" />
@@ -280,7 +279,7 @@ export const DashboardView: React.FC<DashboardViewProps> = ({
 
                     <button
                       onClick={() => onSelectModule(moduleName)}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] text-xs font-mono text-slate-300 transition-colors"
+                      className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.03] hover:bg-white/[0.06] border border-white/[0.06] text-xs font-mono text-slate-300 transition-colors"
                       title="Inspect files"
                     >
                       <FolderOpen className="w-3.5 h-3.5" />

@@ -39,12 +39,12 @@ export const MarkdownViewer: React.FC<MarkdownViewerProps> = ({ content }) => {
             </p>
           ),
           ul: ({ children }) => (
-            <ul className="list-disc list-outside ml-5 space-y-1.5 my-3 text-slate-300 font-sans">
+            <ul className="list-disc list-outside ml-5 space-y-2 my-3 text-slate-300 font-sans">
               {children}
             </ul>
           ),
           ol: ({ children }) => (
-            <ol className="list-decimal list-outside ml-5 space-y-1.5 my-3 text-slate-300 font-sans">
+            <ol className="list-decimal list-outside ml-5 space-y-2 my-3 text-slate-300 font-sans">
               {children}
             </ol>
           ),
@@ -70,14 +70,14 @@ export const MarkdownViewer: React.FC<MarkdownViewerProps> = ({ content }) => {
             </a>
           ),
           table: ({ children }) => (
-            <div className="w-full overflow-x-auto my-6 rounded-xl border border-white/[0.08] bg-[#090b10]">
+            <div className="w-full overflow-x-auto my-6 rounded-lg border border-white/[0.06] bg-[#161c2d]">
               <table className="w-full border-collapse text-left text-xs font-mono">
                 {children}
               </table>
             </div>
           ),
           thead: ({ children }) => (
-            <thead className="border-b border-white/[0.08] bg-white/[0.03] text-slate-200 uppercase tracking-wider font-semibold">
+            <thead className="border-b border-white/[0.06] bg-white/[0.03] text-slate-200 uppercase tracking-wider font-semibold">
               {children}
             </thead>
           ),
@@ -107,7 +107,7 @@ export const MarkdownViewer: React.FC<MarkdownViewerProps> = ({ content }) => {
             }
             return (
               <code
-                className="px-1.5 py-0.5 rounded bg-white/[0.06] border border-white/[0.08] text-emerald-300 font-mono text-xs"
+                className="px-1.5 py-0.5 rounded-lg bg-white/[0.06] border border-white/[0.06] text-emerald-300 font-mono text-xs"
                 {...props}
               >
                 {children}
@@ -144,15 +144,15 @@ function CodeBlockContainer({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="rounded-xl border border-white/[0.08] bg-[#0c0f17] my-4 overflow-hidden shadow-lg group">
-      <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.06] bg-[#090b10] text-[11px] font-mono text-slate-400">
-        <span className="flex items-center gap-1.5">
+    <div className="rounded-lg border border-white/[0.06] bg-[#0e131f] my-4 overflow-hidden group">
+      <div className="flex items-center justify-between px-4 py-2 border-b border-white/[0.06] bg-[#0e131f] text-xs font-mono text-slate-400">
+        <span className="flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-slate-600" />
           <span>Code Snippet</span>
         </span>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1 px-2 py-0.5 rounded hover:bg-white/[0.06] text-slate-400 hover:text-white transition-colors"
+          className="flex items-center gap-2 px-2 py-1 rounded-lg hover:bg-white/[0.06] text-slate-400 hover:text-white transition-colors cursor-pointer"
           title="Copy snippet"
         >
           {copied ? (

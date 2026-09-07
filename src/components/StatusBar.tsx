@@ -30,22 +30,22 @@ export const StatusBar: React.FC<StatusBarProps> = ({
   const totalCount = status ? Object.keys(status.module_breakdown || {}).length : 0;
 
   return (
-    <footer className="h-6 shrink-0 border-t border-white/[0.08] bg-[#07090e] px-3 flex items-center justify-between text-[11px] font-mono select-none z-10 text-slate-400">
+    <footer className="h-6 shrink-0 border-t border-white/[0.06] bg-[#07090e] px-3 flex items-center justify-between text-xs font-mono select-none z-10 text-slate-400">
       {/* Left */}
-      <div className="flex items-center gap-2.5 min-w-0">
+      <div className="flex items-center gap-2 min-w-0">
         <button
           onClick={onToggleSidebar}
           className="hover:text-white transition-colors"
           title={`${isSidebarCollapsed ? "Open" : "Close"} Sidebar (Ctrl+B)`}
         >
-          <PanelLeft className="w-3 h-3" />
+          <PanelLeft className="w-3.5 h-3.5" />
         </button>
 
         {status && (
           <>
             <span className="text-white/[0.1]">|</span>
-            <div className="flex items-center gap-1.5">
-              <Layers className="w-3 h-3 text-emerald-400" />
+            <div className="flex items-center gap-2">
+              <Layers className="w-3.5 h-3.5 text-emerald-400" />
               <span className="text-slate-300">{status.id}</span>
               <span className="text-slate-500">{completedCount}/{totalCount}</span>
             </div>
@@ -54,7 +54,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
       </div>
 
       {/* Right */}
-      <div className="flex items-center gap-2.5 shrink-0">
+      <div className="flex items-center gap-2 shrink-0">
         <span className="text-slate-500">:{currentPort}</span>
         <button
           onClick={onRefresh}
@@ -62,7 +62,7 @@ export const StatusBar: React.FC<StatusBarProps> = ({
           className="hover:text-emerald-400 transition-colors disabled:opacity-50"
           title="Sync"
         >
-          <RefreshCw className={`w-3 h-3 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
+          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin text-emerald-400" : ""}`} />
         </button>
       </div>
     </footer>

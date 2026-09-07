@@ -75,7 +75,7 @@ export const ModuleDetailPage: React.FC<ModuleDetailPageProps> = ({
       <div className="flex items-center justify-between gap-4">
         <button
           onClick={() => navigate("/modules")}
-          className="inline-flex items-center gap-1.5 text-xs font-mono text-slate-400 hover:text-emerald-400 transition-colors"
+          className="inline-flex items-center gap-2 text-xs font-mono text-slate-400 hover:text-emerald-400 transition-colors cursor-pointer"
         >
           <ChevronLeft className="w-4 h-4" />
           <span>Back to All Modules</span>
@@ -84,10 +84,10 @@ export const ModuleDetailPage: React.FC<ModuleDetailPageProps> = ({
         <div className="flex items-center gap-2">
           <button
             onClick={() => onToggleDone(decodedModule, !isDone)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono transition-colors border ${
+            className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono transition-colors border cursor-pointer ${
               isDone
                 ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30 font-bold"
-                : "bg-white/[0.04] text-slate-300 border-white/[0.08] hover:bg-white/[0.08]"
+                : "bg-white/[0.04] text-slate-300 border-white/[0.06] hover:bg-white/[0.08]"
             }`}
           >
             {isDone ? (
@@ -106,10 +106,11 @@ export const ModuleDetailPage: React.FC<ModuleDetailPageProps> = ({
       </div>
 
       {/* Module Title Header Card */}
-      <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] p-6 space-y-4">
+      <div className="rounded-lg border border-white/[0.06] bg-[#161c2d] p-6 space-y-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div className="space-y-1">
-            <span className="text-[11px] font-mono text-emerald-400 uppercase tracking-wider font-semibold">
+            <span className="text-xs font-mono text-slate-400 uppercase tracking-wider font-semibold flex items-center gap-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 inline-block" />
               Module Curriculum Blueprint
             </span>
             <h1 className="font-mono text-xl sm:text-2xl text-[#f5f4ef] font-bold break-all">
@@ -123,14 +124,14 @@ export const ModuleDetailPage: React.FC<ModuleDetailPageProps> = ({
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => navigate("/editor")}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/[0.08] text-xs font-mono transition-colors"
+              className="flex items-center gap-2 px-3 py-2 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-200 border border-white/[0.06] text-xs font-mono transition-colors cursor-pointer"
             >
               <Code2 className="w-4 h-4 text-slate-400" />
               <span>Open in Monaco Studio</span>
             </button>
             <button
               onClick={() => navigate("/verify")}
-              className="flex items-center gap-1.5 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-mono font-bold transition-colors shadow-[0_0_12px_rgba(16,185,129,0.2)]"
+              className="flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 text-xs font-mono font-bold transition-colors cursor-pointer"
             >
               <PlayCircle className="w-4 h-4" />
               <span>Run Verify</span>
@@ -140,8 +141,8 @@ export const ModuleDetailPage: React.FC<ModuleDetailPageProps> = ({
       </div>
 
       {/* Module Instructions & README Preview with Toggle */}
-      <div className="rounded-2xl border border-white/[0.08] bg-[#090b10] overflow-hidden shadow-xl">
-        <div className="px-5 py-3 border-b border-white/[0.06] bg-[#0c0f17] flex items-center justify-between">
+      <div className="rounded-lg border border-white/[0.06] bg-[#161c2d] overflow-hidden">
+        <div className="px-5 py-3 border-b border-white/[0.06] bg-[#0e131f] flex items-center justify-between">
           <div className="flex items-center gap-2 text-xs font-mono text-slate-300">
             <FileText className="w-4 h-4 text-emerald-400" />
             <span>{decodedModule}/README.md</span>
@@ -149,10 +150,10 @@ export const ModuleDetailPage: React.FC<ModuleDetailPageProps> = ({
 
           <div className="flex items-center gap-2">
             {/* View Mode Switcher */}
-            <div className="flex items-center p-0.5 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs font-mono">
+            <div className="flex items-center p-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-xs font-mono">
               <button
                 onClick={() => setPreviewMode("rendered")}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded transition-colors ${
+                className={`flex items-center gap-2 px-3 py-1 rounded-lg transition-colors cursor-pointer ${
                   previewMode === "rendered"
                     ? "bg-white/[0.1] text-emerald-300 font-bold"
                     : "text-slate-400 hover:text-white"
@@ -163,7 +164,7 @@ export const ModuleDetailPage: React.FC<ModuleDetailPageProps> = ({
               </button>
               <button
                 onClick={() => setPreviewMode("raw")}
-                className={`flex items-center gap-1 px-2.5 py-1 rounded transition-colors ${
+                className={`flex items-center gap-2 px-3 py-1 rounded-lg transition-colors cursor-pointer ${
                   previewMode === "raw"
                     ? "bg-white/[0.1] text-emerald-300 font-bold"
                     : "text-slate-400 hover:text-white"
@@ -176,7 +177,7 @@ export const ModuleDetailPage: React.FC<ModuleDetailPageProps> = ({
 
             <button
               onClick={handleCopy}
-              className="p-1.5 rounded hover:bg-white/[0.06] text-slate-400 hover:text-white transition-colors"
+              className="p-2 rounded-lg hover:bg-white/[0.06] text-slate-400 hover:text-white transition-colors cursor-pointer"
               title="Copy Readme text"
             >
               {copied ? (

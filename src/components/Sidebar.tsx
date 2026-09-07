@@ -85,11 +85,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
   // Collapsed sidebar
   if (isCollapsed) {
     return (
-      <aside className="w-14 shrink-0 bg-[#090b10] border-r border-white/[0.07] flex flex-col h-screen select-none z-20 items-center">
-        <div className="h-11 w-full flex items-center justify-center border-b border-white/[0.07]">
+      <aside className="w-14 shrink-0 bg-[#0e131f] border-r border-white/[0.06] flex flex-col h-screen select-none z-20 items-center">
+        <div className="h-11 w-full flex items-center justify-center border-b border-white/[0.06]">
           <button
             onClick={onToggleCollapse}
-            className="p-1.5 rounded text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+            className="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
             title="Expand (Ctrl+B)"
           >
             <PanelLeft className="w-4 h-4" />
@@ -107,7 +107,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className={({ isActive }) =>
                   `p-2 rounded-lg flex items-center justify-center transition-all ${
                     isActive
-                      ? "bg-white/[0.08] text-white"
+                      ? "bg-white/[0.08] text-white border-l-2 border-emerald-500 rounded-l-none"
                       : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
                   }`
                 }
@@ -117,7 +117,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
             );
           })}
 
-          <div className="w-5 h-px bg-white/[0.06] my-1" />
+          <div className="w-5 h-px bg-white/[0.06] my-2" />
 
           {toolItems.map((item) => {
             const Icon = item.icon;
@@ -129,7 +129,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 className={({ isActive }) =>
                   `p-2 rounded-lg flex items-center justify-center transition-all ${
                     isActive
-                      ? "bg-white/[0.08] text-white"
+                      ? "bg-white/[0.08] text-white border-l-2 border-emerald-500 rounded-l-none"
                       : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
                   }`
                 }
@@ -147,10 +147,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
   return (
     <aside
       style={{ width: `${width}px` }}
-      className="shrink-0 bg-[#07090e] border-r border-white/[0.08] flex flex-col h-screen sticky top-0 select-none z-20 relative transition-[width] duration-75 ease-out"
+      className="shrink-0 bg-[#0e131f] border-r border-white/[0.06] flex flex-col h-screen sticky top-0 select-none z-20 relative transition-[width] duration-75 ease-out"
     >
       {/* Header */}
-      <div className="h-11 px-3 border-b border-white/[0.07] flex items-center justify-between">
+      <div className="h-11 px-3 border-b border-white/[0.06] flex items-center justify-between">
         <button
           onClick={() => navigate("/dashboard")}
           className="flex items-center gap-2 hover:opacity-90 transition-opacity cursor-pointer"
@@ -165,7 +165,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
         <button
           onClick={onToggleCollapse}
-          className="p-1 rounded text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
+          className="p-1 rounded-lg text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer"
           title="Collapse (Ctrl+B)"
         >
           <PanelLeftClose className="w-4 h-4" />
@@ -174,8 +174,8 @@ export const Sidebar: React.FC<SidebarProps> = ({
 
       {/* Progress Card */}
       {hasModules && status && (
-        <div className="px-3 py-2.5 mx-2 mt-2 rounded-lg border border-white/[0.06] bg-[#090b10]">
-          <div className="flex items-center justify-between text-[11px] font-mono mb-1.5">
+        <div className="px-3 py-2 mx-2 mt-2 rounded-lg border border-white/[0.06] bg-[#161c2d]">
+          <div className="flex items-center justify-between text-xs font-mono mb-2">
             <span className="text-slate-400 truncate">{status.id}</span>
             <span className="text-emerald-400 font-bold">{progressPercent}%</span>
           </div>
@@ -185,7 +185,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
               style={{ width: `${progressPercent}%` }}
             />
           </div>
-          <div className="flex items-center justify-between text-[10px] font-mono text-slate-500 mt-1">
+          <div className="flex items-center justify-between text-xs font-mono text-slate-500 mt-2">
             <span>{completedCount} done</span>
             <span>{totalCount - completedCount} left</span>
           </div>
@@ -193,7 +193,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       )}
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
+      <nav className="flex-1 px-2 py-2 space-y-1 overflow-y-auto">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isLocked = !hasModules;
@@ -202,22 +202,22 @@ export const Sidebar: React.FC<SidebarProps> = ({
               key={item.to}
               to={isLocked ? "/workspaces" : item.to}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
+                `flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono transition-all ${
                   isLocked
                     ? "text-slate-500 opacity-50 cursor-not-allowed"
                     : isActive
-                    ? "bg-white/[0.08] text-white"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
+                    ? "bg-white/[0.08] text-white border-l-2 border-emerald-500 rounded-l-none pl-2.5 font-medium"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
                 }`
               }
             >
-              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <Icon className="w-4 h-4 shrink-0" />
               <span>{item.label}</span>
             </NavLink>
           );
         })}
 
-        <div className="h-px bg-white/[0.06] my-2 mx-1" />
+        <div className="h-px bg-white/[0.06] my-2 mx-2" />
 
         {toolItems.map((item) => {
           const Icon = item.icon;
@@ -226,14 +226,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
               key={item.to}
               to={item.to}
               className={({ isActive }) =>
-                `flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-xs font-mono transition-all ${
+                `flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-mono transition-all ${
                   isActive
-                    ? "bg-white/[0.08] text-white"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.03]"
+                    ? "bg-white/[0.08] text-white border-l-2 border-emerald-500 rounded-l-none pl-2.5 font-medium"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-white/[0.04]"
                 }`
               }
             >
-              <Icon className="w-3.5 h-3.5 shrink-0" />
+              <Icon className="w-4 h-4 shrink-0" />
               <span>{item.label}</span>
             </NavLink>
           );
